@@ -54,8 +54,7 @@ ERPilot, işletmelerin ERP verilerini (sipariş, stok, müşteri, finans) doğal
 - **Görev Dağılımı Mantığı:** Backend (P2) ve Frontend (P3) tarafı, mimariyi belirleyen Tech Lead (P1) ile eş zamanlı çalışmıştır. Test ve deployment (P4) her sprint sonunda devreye girmiştir.
 - **Sprint 1 Görev Sahipleri:** Beste Avcı (P1), Medine Gül Enser (P2).
 - **Sprint 1 board update:** Sprint Board Screenshot:
-
-![Sprint 1 Jira Board](docs/screenshots/sprint1-jira-board.png)
+![Sprint 1 Jira Board](sprint1-jira-board.png)
 
 **Sprint 1 Görev Özeti**
 
