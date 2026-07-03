@@ -50,7 +50,6 @@ ERPilot, işletmelerin ERP verilerini (sipariş, stok, müşteri, finans) doğal
 
 **Toplantı ve WhatsApp Screenshotları**
 
-> _Buraya günlük toplantı ekran görüntülerinizin bulunduğu klasör/albüm linkini ekleyin._
 
 - **Görev Dağılımı Mantığı:** Backend (P2) ve Frontend (P3) tarafı, mimariyi belirleyen Tech Lead (P1) ile eş zamanlı çalışmıştır. Test ve deployment (P4) her sprint sonunda devreye girmiştir.
 - **Sprint 1 Görev Sahipleri:** Beste Avcı (P1), Medine Gül Enser (P2).
