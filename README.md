@@ -66,5 +66,3 @@ ERPilot, işletmelerin ERP verilerini (sipariş, stok, müşteri, finans) doğal
 | TASK-003 PostgreSQL şema + Alembic migration | P2 | 5 | Veritabanı Şeması |
 | TASK-004 Demo veri seti & seed script | P2 | 2 | Veritabanı Şeması |
 | TASK-005 Connector base interface | P1 | 2 | ERP Connector (CSV) |
-
-Detaylı sprint görev listesi için: [`ERPilot_Jira_Sprint_Plani.md`](./ERPilot_Jira_Sprint_Plani.md)
