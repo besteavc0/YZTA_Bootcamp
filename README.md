@@ -7,7 +7,7 @@ Ekip 86
 - **Beste Avcı** - Product Owner
 - **Medine Gül Enser** - Backend Developer
 - **Yusuf Eker** - Frontend Developer
-- **Hatice Çevik** - Scrum Master
+- **Hatice Şevik** - Scrum Master
 
 # Ürün İsmi
 
@@ -46,9 +46,7 @@ ERPilot, işletmelerin ERP verilerini (sipariş, stok, müşteri, finans) doğal
 - **Puan tamamlama mantığı:** Proje boyunca tamamlanması gereken backlog puanı 115'tir. İlk Sprint için bitirilmesi istenilen puan sayısı 39 olarak belirlenmiştir.
 - **Sprint Hedefi:** Docker ile çalışan backend, veritabanı şeması, CSV veri akışı ve ilk çalışan Text-to-SQL sorgusu.
 - **Definition of Done:** `docker compose up` tek komutla kalkar; Postman'den chat sorusu atılır ve SQL üretilir.
-- **Daily Scrum:** WhatsApp üzerinden günlük görüşmeler sağlanmıştır. Ekip tek grup olarak ilerlemiştir.
-
-**Toplantı ve WhatsApp Screenshotları**
+- **Daily Scrum:** Slack üzerinden günlük görüşmeler sağlanmıştır. Ekip tek grup olarak ilerlemiştir.
 
 
 - **Görev Dağılımı Mantığı:** Backend (P2) ve Frontend (P3) tarafı, mimariyi belirleyen Tech Lead (P1) ile eş zamanlı çalışmıştır. Test ve deployment (P4) her sprint sonunda devreye girmiştir.
