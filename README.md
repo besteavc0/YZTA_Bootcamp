@@ -71,11 +71,11 @@ ERPilot, işletmelerin ERP verilerini (sipariş, stok, müşteri, finans) doğal
 
 Daily Scrum toplantıları zaman kısıtları nedeniyle Slack üzerinden yazılı olarak yürütülmüştür. Örnek ekran görüntüleri:
 
-![Daily Scrum 1](screenshots/daily-scrum-1.jpeg)
-![Daily Scrum 2](screenshots/daily-scrum-2.jpeg)
-![Daily Scrum 3](screenshots/daily-scrum-3.jpeg)
-![Daily Scrum 4](screenshots/daily-scrum-4.jpeg)
-![Daily Scrum 5](screenshots/daily-scrum-5.jpeg)
+<img src="screenshots/daily-scrum-1.jpeg" width="400">
+<img src="screenshots/daily-scrum-2.jpeg" width="400">
+<img src="screenshots/daily-scrum-3.jpeg" width="400">
+<img src="screenshots/daily-scrum-4.jpeg" width="400">
+<img src="screenshots/daily-scrum-5.jpeg" width="400">
 
 ## Sprint Board
 
