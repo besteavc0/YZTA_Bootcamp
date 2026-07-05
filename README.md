@@ -65,3 +65,24 @@ ERPilot, işletmelerin ERP verilerini (sipariş, stok, müşteri, finans) doğal
 | TASK-003 PostgreSQL şema + Alembic migration | P2 | 5 | Veritabanı Şeması |
 | TASK-004 Demo veri seti & seed script | P2 | 2 | Veritabanı Şeması |
 | TASK-005 Connector base interface | P1 | 2 | ERP Connector (CSV) |
+
+
+## Daily Scrum
+
+Daily Scrum toplantıları zaman kısıtları nedeniyle Slack üzerinden yazılı olarak yürütülmüştür. Örnek ekran görüntüleri:
+
+![Daily Scrum 1](screenshots/daily-scrum-1.jpeg)
+![Daily Scrum 2](screenshots/daily-scrum-2.jpeg)
+![Daily Scrum 3](screenshots/daily-scrum-3.jpeg)
+![Daily Scrum 4](screenshots/daily-scrum-4.jpeg)
+![Daily Scrum 5](screenshots/daily-scrum-5.jpeg)
+
+## Sprint Board
+
+
+## Ürün Durumu: Ekran Görüntüleri
+
+
+## Sprint Review
+
+
