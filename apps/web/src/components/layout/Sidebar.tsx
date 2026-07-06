@@ -135,7 +135,7 @@ export function Sidebar() {
 
       <div className="border-t p-4">
         <div className="flex items-center gap-3">
-          <UserButton afterSignOutUrl="/login" />
+          <UserButton />
 
           <div className="min-w-0">
             <p className="truncate text-sm font-medium">
