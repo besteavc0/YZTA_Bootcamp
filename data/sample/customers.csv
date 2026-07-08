@@ -1,0 +1,21 @@
+customer_id,name,city,segment
+C001,Anka Teknoloji Ltd. Sti.,Istanbul,Kurumsal
+C002,Deniz Yapi Malzemeleri,Ankara,KOBI
+C003,Yildiz Gida San. Tic.,Izmir,Kurumsal
+C004,Mehmet Ozturk,Bursa,Bireysel
+C005,Bereket Tekstil A.S.,Istanbul,Kurumsal
+C006,Ayse Kaya,Antalya,Bireysel
+C007,Karadeniz Lojistik,Trabzon,KOBI
+C008,Ege Elektronik,Izmir,KOBI
+C009,Fatih Demir,Istanbul,Bireysel
+C010,Anadolu Insaat A.S.,Ankara,Kurumsal
+C011,Zeynep Sahin,Bursa,Bireysel
+C012,Marmara Kimya Ltd.,Kocaeli,KOBI
+C013,Toros Makine San.,Adana,Kurumsal
+C014,Elif Yildirim,Izmir,Bireysel
+C015,Baris Celik,Ankara,Bireysel
+C016,Pamuk Tekstil Ltd.,Denizli,KOBI
+C017,Ahmet Aydin,Istanbul,Bireysel
+C018,Firat Otomotiv A.S.,Gaziantep,Kurumsal
+C019,Selin Arslan,Antalya,Bireysel
+C020,Meltem Gida Ltd.,Bursa,KOBI
