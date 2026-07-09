@@ -1,0 +1,31 @@
+product_id,product_name,warehouse,quantity,reorder_level
+P001,Celik Vida 8mm,Istanbul-Merkez,450,100
+P002,Aluminyum Profil 2m,Istanbul-Merkez,320,80
+P003,PVC Boru 100mm,Ankara-Depo,15,50
+P004,Elektrik Kablosu 3x2.5,Istanbul-Merkez,890,200
+P005,Seramik Fayans 60x60,Izmir-Depo,0,30
+P006,Kompozit Panel,Bursa-Depo,275,60
+P007,Yalitim Kopugu,Ankara-Depo,540,120
+P008,Cam Yun Rulo,Istanbul-Merkez,8,40
+P009,Alcipan 12.5mm,Izmir-Depo,610,150
+P010,Boya Astar 15L,Bursa-Depo,95,50
+P011,Silikon Tup,Istanbul-Merkez,-5,60
+P012,Firca Seti,Ankara-Depo,410,90
+P013,Merdiven Aluminyum,Izmir-Depo,42,20
+P014,Kaynak Teli 1mm,Bursa-Depo,730,180
+P015,Matkap Ucu Seti,Istanbul-Merkez,220,70
+P016,Hidrolik Pompa,Ankara-Depo,18,45
+P017,Kompresor 50L,Izmir-Depo,12,25
+P018,Jenerator 5kW,Bursa-Depo,7,15
+P019,Kaynak Makinesi,Istanbul-Merkez,25,30
+P020,Vinc Halati 10m,Ankara-Depo,340,80
+P021,Guvenlik Kaski,Izmir-Depo,580,150
+P022,Is Eldiveni Cift,Bursa-Depo,920,250
+P023,Emniyet Kemeri,Istanbul-Merkez,165,60
+P024,Sac Levha 2mm,Ankara-Depo,410,100
+P025,Galvaniz Boru,Izmir-Depo,290,70
+P026,Cimento 50kg,Bursa-Depo,1200,300
+P027,Kum 1ton,Istanbul-Merkez,85,40
+P028,Demir Cubuk 12mm,Ankara-Depo,3,50
+P029,Briket Blok,Izmir-Depo,670,150
+P030,Kirec 25kg,Bursa-Depo,510,120
