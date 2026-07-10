@@ -5,24 +5,34 @@ import { SendHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { ChatMessage } from "@/types";
+import { getMockChatHistory, sendMockChatMessage } from "@/services/chat-service";
 import { MessageBubble } from "./MessageBubble";
 
-const mockMessages: ChatMessage[] = [
-  {
-    id: "1",
-    role: "assistant",
-    content:
-      "Merhaba, ben ERPilot AI Asistanı. Bana satış, stok, müşteri veya sipariş verileriyle ilgili Türkçe soru sorabilirsin.",
-    createdAt: new Date().toISOString(),
-    sources: [],
-  },
-];
-
 export function ChatWindow() {
-  const [messages, setMessages] = useState<ChatMessage[]>(mockMessages);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [question, setQuestion] = useState("");
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [isSending, setIsSending] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    async function loadHistory() {
+      try {
+        setIsLoadingHistory(true);
+        setErrorMessage(null);
+
+        const history = await getMockChatHistory();
+        setMessages(history);
+      } catch {
+        setErrorMessage("Sohbet geçmişi yüklenirken bir hata oluştu.");
+      } finally {
+        setIsLoadingHistory(false);
+      }
+    }
+
+    void loadHistory();
+  }, []);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -47,25 +57,26 @@ export function ChatWindow() {
     setMessages((currentMessages) => [...currentMessages, userMessage]);
     setQuestion("");
     setIsSending(true);
+    setErrorMessage(null);
 
-    await new Promise((resolve) => setTimeout(resolve, 800));
+    try {
+      const response = await sendMockChatMessage(trimmedQuestion);
 
-    const assistantMessage: ChatMessage = {
-      id: crypto.randomUUID(),
-      role: "assistant",
-      content:
-        "Mock cevap: Bu alan backend hazır olduğunda `/api/v1/chat` endpoint'inden gelen gerçek yanıtla doldurulacak.",
-      createdAt: new Date().toISOString(),
-      sources: [
-        {
-          table: "canonical_orders",
-          filters: "tenant_id=demo, son 30 gün",
-        },
-      ],
-    };
+      const assistantMessage: ChatMessage = {
+        id: crypto.randomUUID(),
+        role: "assistant",
+        content: response.answer,
+        sqlQuery: response.sqlQuery,
+        sources: response.sources,
+        createdAt: new Date().toISOString(),
+      };
 
-    setMessages((currentMessages) => [...currentMessages, assistantMessage]);
-    setIsSending(false);
+      setMessages((currentMessages) => [...currentMessages, assistantMessage]);
+    } catch {
+      setErrorMessage("Bir hata oluştu, lütfen tekrar deneyin.");
+    } finally {
+      setIsSending(false);
+    }
   }
 
   return (
@@ -78,15 +89,27 @@ export function ChatWindow() {
       </div>
 
       <div className="flex-1 space-y-6 overflow-y-auto p-6">
-        {messages.map((message) => (
-          <MessageBubble key={message.id} message={message} />
-        ))}
+        {isLoadingHistory ? (
+          <div className="text-sm text-muted-foreground">
+            Sohbet geçmişi yükleniyor...
+          </div>
+        ) : (
+          messages.map((message) => (
+            <MessageBubble key={message.id} message={message} />
+          ))
+        )}
 
         {isSending && (
           <div className="flex justify-start">
             <div className="rounded-2xl border bg-background px-4 py-3 text-sm text-muted-foreground shadow-sm">
               Asistan yanıtlıyor...
             </div>
+          </div>
+        )}
+
+        {errorMessage && (
+          <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            {errorMessage}
           </div>
         )}
 
@@ -98,10 +121,13 @@ export function ChatWindow() {
           value={question}
           onChange={(event) => setQuestion(event.target.value)}
           placeholder="Örn: Bu ay toplam satış tutarı ne kadar?"
-          disabled={isSending}
+          disabled={isSending || isLoadingHistory}
         />
 
-        <Button type="submit" disabled={isSending || !question.trim()}>
+        <Button
+          type="submit"
+          disabled={isSending || isLoadingHistory || !question.trim()}
+        >
           <SendHorizontal className="mr-2 h-4 w-4" />
           Gönder
         </Button>
