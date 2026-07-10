@@ -1,21 +1,27 @@
 "use client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
+import { useAuth } from "@clerk/nextjs";
 import { SendHorizontal } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { ChatMessage } from "@/types";
-import { getMockChatHistory, sendMockChatMessage } from "@/services/chat-service";
+import { getChatHistory, sendChatMessage } from "@/services/chat-service";
+
 import { MessageBubble } from "./MessageBubble";
 import { SuggestedQuestions } from "./SuggestedQuestions";
 import { TypingIndicator } from "./TypingIndicator";
 
 export function ChatWindow() {
+  const { getToken } = useAuth();
+
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [question, setQuestion] = useState("");
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -24,7 +30,9 @@ export function ChatWindow() {
         setIsLoadingHistory(true);
         setErrorMessage(null);
 
-        const history = await getMockChatHistory();
+        const token = await getToken();
+        const history = await getChatHistory(token);
+
         setMessages(history);
       } catch {
         setErrorMessage("Sohbet geçmişi yüklenirken bir hata oluştu.");
@@ -34,55 +42,56 @@ export function ChatWindow() {
     }
 
     void loadHistory();
-  }, []);
+  }, [getToken]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isSending]);
 
-async function sendQuestion(questionText: string) {
-  const trimmedQuestion = questionText.trim();
+  async function sendQuestion(questionText: string) {
+    const trimmedQuestion = questionText.trim();
 
-  if (!trimmedQuestion || isSending) {
-    return;
-  }
+    if (!trimmedQuestion || isSending || isLoadingHistory) {
+      return;
+    }
 
-  const userMessage: ChatMessage = {
-    id: crypto.randomUUID(),
-    role: "user",
-    content: trimmedQuestion,
-    createdAt: new Date().toISOString(),
-  };
-
-  setMessages((currentMessages) => [...currentMessages, userMessage]);
-  setQuestion("");
-  setIsSending(true);
-  setErrorMessage(null);
-
-  try {
-    const response = await sendMockChatMessage(trimmedQuestion);
-
-    const assistantMessage: ChatMessage = {
+    const userMessage: ChatMessage = {
       id: crypto.randomUUID(),
-      role: "assistant",
-      content: response.answer,
-      sqlQuery: response.sqlQuery,
-      sources: response.sources,
+      role: "user",
+      content: trimmedQuestion,
       createdAt: new Date().toISOString(),
     };
 
-    setMessages((currentMessages) => [...currentMessages, assistantMessage]);
-  } catch {
-    setErrorMessage("Bir hata oluştu, lütfen tekrar deneyin.");
-  } finally {
-    setIsSending(false);
-  }
-}
+    setMessages((currentMessages) => [...currentMessages, userMessage]);
+    setQuestion("");
+    setIsSending(true);
+    setErrorMessage(null);
 
-async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-  event.preventDefault();
-  await sendQuestion(question);
-}
+    try {
+      const token = await getToken();
+      const response = await sendChatMessage(trimmedQuestion, token);
+
+      const assistantMessage: ChatMessage = {
+        id: crypto.randomUUID(),
+        role: "assistant",
+        content: response.answer,
+        sqlQuery: response.sqlQuery,
+        sources: response.sources,
+        createdAt: new Date().toISOString(),
+      };
+
+      setMessages((currentMessages) => [...currentMessages, assistantMessage]);
+    } catch {
+      setErrorMessage("Bir hata oluştu, lütfen tekrar deneyin.");
+    } finally {
+      setIsSending(false);
+    }
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    await sendQuestion(question);
+  }
 
   return (
     <div className="flex h-[calc(100vh-8rem)] flex-col rounded-xl border bg-background">
@@ -103,14 +112,15 @@ async function handleSubmit(event: FormEvent<HTMLFormElement>) {
             <MessageBubble key={message.id} message={message} />
           ))
         )}
+
         {!isLoadingHistory && messages.length <= 1 && (
-  <SuggestedQuestions
-    disabled={isSending}
-    onSelectQuestion={(selectedQuestion) => {
-      void sendQuestion(selectedQuestion);
-    }}
-  />
-)}
+          <SuggestedQuestions
+            disabled={isSending}
+            onSelectQuestion={(selectedQuestion) => {
+              void sendQuestion(selectedQuestion);
+            }}
+          />
+        )}
 
         {isSending && <TypingIndicator />}
 

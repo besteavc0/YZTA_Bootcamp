@@ -1,3 +1,4 @@
+import { apiFetch } from "@/lib/api";
 import type { ChatMessage, SourceInfo } from "@/types";
 
 export type SendChatMessageResponse = {
@@ -5,6 +6,19 @@ export type SendChatMessageResponse = {
   sqlQuery?: string | null;
   sources?: SourceInfo[];
 };
+
+type ChatApiResponse = {
+  answer: string;
+  sql_query?: string | null;
+  sources?: SourceInfo[];
+  created_at?: string;
+};
+
+type ChatHistoryApiResponse = {
+  items: ChatMessage[];
+};
+
+const useMockChat = process.env.NEXT_PUBLIC_USE_MOCK_CHAT !== "false";
 
 const initialMockMessages: ChatMessage[] = [
   {
@@ -17,13 +31,52 @@ const initialMockMessages: ChatMessage[] = [
   },
 ];
 
-export async function getMockChatHistory(): Promise<ChatMessage[]> {
+export async function getChatHistory(
+  token?: string | null
+): Promise<ChatMessage[]> {
+  if (useMockChat) {
+    return getMockChatHistory();
+  }
+
+  const response = await apiFetch<ChatHistoryApiResponse>(
+    "/api/v1/chat/history",
+    {
+      token,
+      method: "GET",
+    }
+  );
+
+  return response.items;
+}
+
+export async function sendChatMessage(
+  question: string,
+  token?: string | null
+): Promise<SendChatMessageResponse> {
+  if (useMockChat) {
+    return sendMockChatMessage(question);
+  }
+
+  const response = await apiFetch<ChatApiResponse>("/api/v1/chat", {
+    token,
+    method: "POST",
+    body: JSON.stringify({ question }),
+  });
+
+  return {
+    answer: response.answer,
+    sqlQuery: response.sql_query ?? null,
+    sources: response.sources ?? [],
+  };
+}
+
+async function getMockChatHistory(): Promise<ChatMessage[]> {
   await new Promise((resolve) => setTimeout(resolve, 400));
 
   return initialMockMessages;
 }
 
-export async function sendMockChatMessage(
+async function sendMockChatMessage(
   question: string
 ): Promise<SendChatMessageResponse> {
   await new Promise((resolve) => setTimeout(resolve, 800));
