@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import type { ChatMessage } from "@/types";
 import { getMockChatHistory, sendMockChatMessage } from "@/services/chat-service";
 import { MessageBubble } from "./MessageBubble";
+import { SuggestedQuestions } from "./SuggestedQuestions";
+import { TypingIndicator } from "./TypingIndicator";
 
 export function ChatWindow() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -38,46 +40,49 @@ export function ChatWindow() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isSending]);
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+async function sendQuestion(questionText: string) {
+  const trimmedQuestion = questionText.trim();
 
-    const trimmedQuestion = question.trim();
+  if (!trimmedQuestion || isSending) {
+    return;
+  }
 
-    if (!trimmedQuestion || isSending) {
-      return;
-    }
+  const userMessage: ChatMessage = {
+    id: crypto.randomUUID(),
+    role: "user",
+    content: trimmedQuestion,
+    createdAt: new Date().toISOString(),
+  };
 
-    const userMessage: ChatMessage = {
+  setMessages((currentMessages) => [...currentMessages, userMessage]);
+  setQuestion("");
+  setIsSending(true);
+  setErrorMessage(null);
+
+  try {
+    const response = await sendMockChatMessage(trimmedQuestion);
+
+    const assistantMessage: ChatMessage = {
       id: crypto.randomUUID(),
-      role: "user",
-      content: trimmedQuestion,
+      role: "assistant",
+      content: response.answer,
+      sqlQuery: response.sqlQuery,
+      sources: response.sources,
       createdAt: new Date().toISOString(),
     };
 
-    setMessages((currentMessages) => [...currentMessages, userMessage]);
-    setQuestion("");
-    setIsSending(true);
-    setErrorMessage(null);
-
-    try {
-      const response = await sendMockChatMessage(trimmedQuestion);
-
-      const assistantMessage: ChatMessage = {
-        id: crypto.randomUUID(),
-        role: "assistant",
-        content: response.answer,
-        sqlQuery: response.sqlQuery,
-        sources: response.sources,
-        createdAt: new Date().toISOString(),
-      };
-
-      setMessages((currentMessages) => [...currentMessages, assistantMessage]);
-    } catch {
-      setErrorMessage("Bir hata oluştu, lütfen tekrar deneyin.");
-    } finally {
-      setIsSending(false);
-    }
+    setMessages((currentMessages) => [...currentMessages, assistantMessage]);
+  } catch {
+    setErrorMessage("Bir hata oluştu, lütfen tekrar deneyin.");
+  } finally {
+    setIsSending(false);
   }
+}
+
+async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  event.preventDefault();
+  await sendQuestion(question);
+}
 
   return (
     <div className="flex h-[calc(100vh-8rem)] flex-col rounded-xl border bg-background">
@@ -98,14 +103,16 @@ export function ChatWindow() {
             <MessageBubble key={message.id} message={message} />
           ))
         )}
+        {!isLoadingHistory && messages.length <= 1 && (
+  <SuggestedQuestions
+    disabled={isSending}
+    onSelectQuestion={(selectedQuestion) => {
+      void sendQuestion(selectedQuestion);
+    }}
+  />
+)}
 
-        {isSending && (
-          <div className="flex justify-start">
-            <div className="rounded-2xl border bg-background px-4 py-3 text-sm text-muted-foreground shadow-sm">
-              Asistan yanıtlıyor...
-            </div>
-          </div>
-        )}
+        {isSending && <TypingIndicator />}
 
         {errorMessage && (
           <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
