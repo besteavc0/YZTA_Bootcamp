@@ -1,0 +1,48 @@
+# Dolibarr'ı yerelde ayağa kaldırmak için hazır compose dosyası.
+# ERPilot ile aynı makinede çalıştırmak için port 8080 kullanılır (ERPilot web 3000, api 8000).
+#
+# Kullanım:
+#   docker compose -f docker-compose.dolibarr.yml up -d
+#   Tarayıcı: http://localhost:8080  (ilk giriş: admin / admin)
+#
+# DOLI_INIT_DEMO=1 -> hazır demo veri (müşteri/ürün/sipariş) ile gelir; test için idealdir.
+
+services:
+  dolibarr-db:
+    image: mariadb:11
+    container_name: dolibarr-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: dolidb
+      MYSQL_USER: dolidbuser
+      MYSQL_PASSWORD: dolidbpass
+    volumes:
+      - dolibarr_db:/var/lib/mysql
+
+  dolibarr:
+    image: dolibarr/dolibarr:latest
+    container_name: dolibarr-web
+    restart: unless-stopped
+    depends_on:
+      - dolibarr-db
+    environment:
+      DOLI_DB_HOST: dolibarr-db
+      DOLI_DB_NAME: dolidb
+      DOLI_DB_USER: dolidbuser
+      DOLI_DB_PASSWORD: dolidbpass
+      DOLI_URL_ROOT: "http://localhost:8080"
+      DOLI_ADMIN_LOGIN: admin
+      DOLI_ADMIN_PASSWORD: admin
+      DOLI_INIT_DEMO: 1          # demo veri ile gel (test için)
+      DOLI_INSTALL_AUTO: 1       # ilk açılışta otomatik kurulum + migration
+    ports:
+      - "8080:80"
+    volumes:
+      - dolibarr_docs:/var/www/documents
+      - dolibarr_custom:/var/www/html/custom
+
+volumes:
+  dolibarr_db:
+  dolibarr_docs:
+  dolibarr_custom:
