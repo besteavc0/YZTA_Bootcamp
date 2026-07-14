@@ -1,0 +1,154 @@
+"use client";
+
+import { FormEvent, useEffect, useRef, useState } from "react";
+import { useAuth } from "@clerk/nextjs";
+import { SendHorizontal } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import type { ChatMessage } from "@/types";
+import { getChatHistory, sendChatMessage } from "@/services/chat-service";
+
+import { MessageBubble } from "./MessageBubble";
+import { SuggestedQuestions } from "./SuggestedQuestions";
+import { TypingIndicator } from "./TypingIndicator";
+
+export function ChatWindow() {
+  const { getToken } = useAuth();
+
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [question, setQuestion] = useState("");
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+  const [isSending, setIsSending] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const bottomRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    async function loadHistory() {
+      try {
+        setIsLoadingHistory(true);
+        setErrorMessage(null);
+
+        const token = await getToken();
+        const history = await getChatHistory(token);
+
+        setMessages(history);
+      } catch {
+        setErrorMessage("Sohbet geçmişi yüklenirken bir hata oluştu.");
+      } finally {
+        setIsLoadingHistory(false);
+      }
+    }
+
+    void loadHistory();
+  }, [getToken]);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, isSending]);
+
+  async function sendQuestion(questionText: string) {
+    const trimmedQuestion = questionText.trim();
+
+    if (!trimmedQuestion || isSending || isLoadingHistory) {
+      return;
+    }
+
+    const userMessage: ChatMessage = {
+      id: crypto.randomUUID(),
+      role: "user",
+      content: trimmedQuestion,
+      createdAt: new Date().toISOString(),
+    };
+
+    setMessages((currentMessages) => [...currentMessages, userMessage]);
+    setQuestion("");
+    setIsSending(true);
+    setErrorMessage(null);
+
+    try {
+      const token = await getToken();
+      const response = await sendChatMessage(trimmedQuestion, token);
+
+      const assistantMessage: ChatMessage = {
+        id: crypto.randomUUID(),
+        role: "assistant",
+        content: response.answer,
+        sqlQuery: response.sqlQuery,
+        sources: response.sources,
+        createdAt: new Date().toISOString(),
+      };
+
+      setMessages((currentMessages) => [...currentMessages, assistantMessage]);
+    } catch {
+      setErrorMessage("Bir hata oluştu, lütfen tekrar deneyin.");
+    } finally {
+      setIsSending(false);
+    }
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    await sendQuestion(question);
+  }
+
+  return (
+    <div className="flex h-[calc(100vh-8rem)] flex-col rounded-xl border bg-background">
+      <div className="border-b px-6 py-4">
+        <h2 className="text-lg font-semibold">ERPilot AI Asistan</h2>
+        <p className="text-sm text-muted-foreground">
+          ERP verilerin hakkında Türkçe soru sor.
+        </p>
+      </div>
+
+      <div className="flex-1 space-y-6 overflow-y-auto p-6">
+        {isLoadingHistory ? (
+          <div className="text-sm text-muted-foreground">
+            Sohbet geçmişi yükleniyor...
+          </div>
+        ) : (
+          messages.map((message) => (
+            <MessageBubble key={message.id} message={message} />
+          ))
+        )}
+
+        {!isLoadingHistory && messages.length <= 1 && (
+          <SuggestedQuestions
+            disabled={isSending}
+            onSelectQuestion={(selectedQuestion) => {
+              void sendQuestion(selectedQuestion);
+            }}
+          />
+        )}
+
+        {isSending && <TypingIndicator />}
+
+        {errorMessage && (
+          <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            {errorMessage}
+          </div>
+        )}
+
+        <div ref={bottomRef} />
+      </div>
+
+      <form onSubmit={handleSubmit} className="flex gap-3 border-t p-4">
+        <Input
+          value={question}
+          onChange={(event) => setQuestion(event.target.value)}
+          placeholder="Örn: Bu ay toplam satış tutarı ne kadar?"
+          disabled={isSending || isLoadingHistory}
+        />
+
+        <Button
+          type="submit"
+          disabled={isSending || isLoadingHistory || !question.trim()}
+        >
+          <SendHorizontal className="mr-2 h-4 w-4" />
+          Gönder
+        </Button>
+      </form>
+    </div>
+  );
+}
