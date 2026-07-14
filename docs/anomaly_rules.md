@@ -2,100 +2,103 @@
 
 > TASK-014 çıktısıdır. Kod implementasyonu Sprint 2 - TASK-022'de yapılacaktır.
 > İskelet: `apps/api/app/services/anomaly_service.py`
-> Kaynak: ERPILOT_MASTER_PLAN.md, Bölüm 10 — Anomali Kural Motoru (MVP örnek kuralları)
+> Kaynak: ERPilot_Jira_Sprint_Plani.md, TASK-022 (Sprint 2 — Anomali kural motoru implementasyonu)
+> Not: Bu 5 kural, Sprint 2'de `anomaly_rules` tablosuna seed edilecek ve `seed_demo_data.py` içinde tanımlanacak kurallarla birebir aynıdır.
 
 ---
 
-## Kural 1 — Yüksek Tutarlı Sipariş
+## Kural 1 — Gece Saati Yüksek Tutarlı Sipariş
 
 - **Sorgulanacak tablo:** `canonical_orders`
 - **Severity:** high
-- **Tetikleme koşulu:** Son 7 gün içinde `total_amount > 100.000`
+- **Tetikleme koşulu:** Siparişin saati 00:00–06:00 arasında VE `total_amount > 50.000`
 - **SQL mantığı (pseudocode):**
   ```sql
   SELECT external_id, total_amount, order_date
   FROM canonical_orders
   WHERE tenant_id = :tenant_id
-    AND total_amount > 100000
-    AND order_date >= CURRENT_DATE - INTERVAL '7 days'
+    AND EXTRACT(HOUR FROM order_date) BETWEEN 0 AND 6
+    AND total_amount > 50000
   ```
-- **Gerekçe:** Olağan dışı yüksek tutarlı bir sipariş; hatalı veri girişi, fiyatlandırma hatası veya dikkat gerektiren büyük bir işlem olabilir.
+- **Gerekçe:** Mesai saatleri dışında yapılan yüksek tutarlı bir sipariş; yetkisiz erişim, hatalı veri girişi veya olağan dışı bir işlem göstergesi olabilir.
 
 ---
 
-## Kural 2 — Kritik Stok Altı Ürünler
+## Kural 2 — Aynı Müşteriden Kısa Sürede Çok Sipariş
+
+- **Sorgulanacak tablo:** `canonical_orders`
+- **Severity:** medium
+- **Tetikleme koşulu:** Aynı `customer_external_id`'den 1 saatlik zaman penceresinde 5'ten fazla sipariş
+- **SQL mantığı (pseudocode):**
+  ```sql
+  SELECT customer_external_id, COUNT(*) as siparis_sayisi
+  FROM canonical_orders
+  WHERE tenant_id = :tenant_id
+  GROUP BY customer_external_id, date_trunc('hour', order_date)
+  HAVING COUNT(*) > 5
+  ```
+- **Gerekçe:** Bot/otomasyon kaynaklı hatalı sipariş akışı veya entegrasyon hatası olabilir.
+
+---
+
+## Kural 3 — Negatif veya Sıfır Stok
 
 - **Sorgulanacak tablo:** `canonical_inventory`
-- **Severity:** medium
-- **Tetikleme koşulu:** `quantity < reorder_level` (reorder_level tanımlıysa)
+- **Severity:** high
+- **Tetikleme koşulu:** `quantity <= 0`
 - **SQL mantığı (pseudocode):**
   ```sql
-  SELECT product_name, quantity, reorder_level
+  SELECT product_name, quantity
   FROM canonical_inventory
   WHERE tenant_id = :tenant_id
-    AND reorder_level IS NOT NULL
-    AND quantity < reorder_level
+    AND quantity <= 0
   ```
-- **Gerekçe:** Stok tükenme riski; tedarik/satın alma ekibinin önceden haberdar edilmesi operasyonel devamlılık için önemlidir.
+- **Gerekçe:** Negatif stok mantıksal olarak imkânsızdır; senkronizasyon hatası veya iptal/iade akışında tutarsızlığa işaret eder. Sıfır stok da tükenme durumunu gösterir, yüksek öncelikle incelenmelidir.
 
 ---
 
-## Kural 3 — Aynı Gün Çoklu İade
+## Kural 4 — Ortalamanın 3 Katından Fazla Sipariş Tutarı
 
 - **Sorgulanacak tablo:** `canonical_orders`
 - **Severity:** medium
-- **Tetikleme koşulu:** Aynı günde `status = 'returned'` olan sipariş sayısı 10'dan fazla (son 1 gün)
+- **Tetikleme koşulu:** `total_amount > (genel ortalama total_amount * 3)`
 - **SQL mantığı (pseudocode):**
   ```sql
-  SELECT order_date, COUNT(*) as iade_sayisi
-  FROM canonical_orders
+  SELECT * FROM canonical_orders
   WHERE tenant_id = :tenant_id
-    AND status = 'returned'
-    AND order_date >= CURRENT_DATE - INTERVAL '1 day'
-  GROUP BY order_date
-  HAVING COUNT(*) > 10
+    AND total_amount > (
+      SELECT AVG(total_amount) * 3
+      FROM canonical_orders
+      WHERE tenant_id = :tenant_id
+    )
   ```
-- **Gerekçe:** Kısa sürede yoğun iade; ürün/kalite sorunu, hatalı kampanya veya sistemsel bir hata göstergesi olabilir.
+- **Gerekçe:** Fiyatlandırma hatası, yanlış girilen miktar veya olağan dışı büyük bir sipariş; manuel doğrulama gerektirir.
 
 ---
 
-## Kural 4 — Sıfır Tutarlı Sipariş
+## Kural 5 — 30 Gün Sipariş Vermeyen Müşteri (Churn Riski)
 
-- **Sorgulanacak tablo:** `canonical_orders`
-- **Severity:** high
-- **Tetikleme koşulu:** Son 30 gün içinde `total_amount = 0`
-- **SQL mantığı (pseudocode):**
-  ```sql
-  SELECT external_id, order_date
-  FROM canonical_orders
-  WHERE tenant_id = :tenant_id
-    AND total_amount = 0
-    AND order_date >= CURRENT_DATE - INTERVAL '30 days'
-  ```
-- **Gerekçe:** Sıfır tutarlı bir sipariş normalde beklenmez; veri senkronizasyon hatası veya hatalı kayıt oluşturma sürecine işaret edebilir.
-
----
-
-## Kural 5 — Gece Saatlerinde Sipariş (Veri Kalitesi)
-
-- **Sorgulanacak tablo:** `canonical_orders`
+- **Sorgulanacak tablo:** `canonical_customers` (canonical_orders ile ilişkili)
 - **Severity:** low
-- **Tetikleme koşulu:** Son 7 gün içindeki siparişler taranır (veri kalitesi/gözlem amaçlı, ilk 50 kayıt)
+- **Tetikleme koşulu:** Son 30 günde `canonical_orders`'da kaydı olmayan müşteriler
 - **SQL mantığı (pseudocode):**
   ```sql
-  SELECT external_id, order_date
-  FROM canonical_orders
-  WHERE tenant_id = :tenant_id
-    AND order_date >= CURRENT_DATE - INTERVAL '7 days'
-  LIMIT 50
+  SELECT c.* FROM canonical_customers c
+  WHERE c.tenant_id = :tenant_id
+    AND NOT EXISTS (
+      SELECT 1 FROM canonical_orders o
+      WHERE o.customer_external_id = c.external_id
+        AND o.order_date >= CURRENT_DATE - INTERVAL '30 days'
+    )
   ```
-- **Gerekçe:** Düşük öncelikli, veri kalitesi/gözlem amaçlı bir tarama; Sprint 2'de saat bazlı filtre (örn. 00:00–06:00) eklenerek daraltılabilir.
+- **Gerekçe:** Düşük öncelikli ama iş değeri yüksek bir sinyal; pazarlama/müşteri ilişkileri ekibinin proaktif olarak müşteriyle iletişime geçmesini sağlar.
 
 ---
 
 ## Genel Notlar
 
 - Tüm kurallar `tenant_id` ile filtrelenerek çok kiracılı (multi-tenant) izolasyon sağlanmalıdır.
-- Kurallar `anomaly_rules` tablosunda JSON `rule_config` olarak saklanacak; Celery job (`workers/tasks/run_anomalies.py`) bu kuralları sırayla çalıştırıp `anomaly_findings` tablosuna sonuç yazacak (bkz. Master Plan Bölüm 10).
-- Eşik değerleri (₺100.000, 10 iade/gün, 30 gün vb.) Sprint 2'de `rule_config` içinden konfigüre edilebilir hale getirilecek.
+- Kurallar `anomaly_rules` tablosuna Sprint 2'de (`seed_demo_data.py` içinde) seed edilecek; `AnomalyService.run_all_rules()` bu kuralları sırayla çalıştırıp `anomaly_findings` tablosuna sonuç yazacaktır.
+- Eşik değerleri (₺50.000, 5 sipariş/saat, 3x ortalama, 30 gün vb.) sabit (hardcoded) olarak başlanacak, ileride `anomaly_rules.rule_config` üzerinden konfigüre edilebilir hale getirilebilir.
 - Her finding, `anomaly_findings` tablosuna `rule_name`, `severity`, `tenant_id`, `related_record_id`, `detected_at`, `is_resolved` alanlarıyla yazılacak.
+- Aynı kural + aynı `external_id` kombinasyonu için aynı gün içinde birden fazla finding oluşturulmaması gerekir (duplicate önleme, TASK-022 kabul kriteri).
