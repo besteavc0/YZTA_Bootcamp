@@ -140,6 +140,23 @@ Sprint Review katılımcıları: Beste (Product Owner), Hatice (Scrum Master).
 ## Daily Scrum
 
 Daily Scrum toplantıları kolay iletişime geçebilmek nedeniyle Whatsapp üzerinden yazılı olarak yürütülmüştür. Örnek ekran görüntüleri:
+<img width="400" height="2048" alt="WhatsApp Image 2026-07-19 at 18 55 02" src="https://github.com/user-attachments/assets/6499a30f-fec7-451e-a973-c56493b20a41" />
+
+<img width="400" height="2048" alt="WhatsApp Image 2026-07-19 at 18 55 02 (5)" src="https://github.com/user-attachments/assets/c6538f43-4c49-4dcf-b21d-2298ae624e7c" />
+
+<img width="400" height="2048" alt="WhatsApp Image 2026-07-19 at 18 55 03" src="https://github.com/user-attachments/assets/2c648bb1-63a1-4b67-9d3b-1cd72adc7b26" />
+
+<img width="400" height="2048" alt="WhatsApp Image 2026-07-19 at 18 55 02 (1)" src="https://github.com/user-attachments/assets/52bc15b7-3e77-43f8-a924-414537fca17f" />
+
+<img width="400" height="2048" alt="WhatsApp Image 2026-07-19 at 18 55 01" src="https://github.com/user-attachments/assets/764c309b-b9ba-4194-9154-f1b6933de096" />
+
+<img width="400" height="2048" alt="WhatsApp Image 2026-07-19 at 18 55 01 (1)" src="https://github.com/user-attachments/assets/62918be3-a568-4a01-9940-3933b0f0c56f" />
+
+<img width="400" height="2048" alt="WhatsApp Image 2026-07-19 at 18 55 02 (4)" src="https://github.com/user-attachments/assets/ec177cdd-c381-4b35-88a8-52887f9602aa" />
+
+<img width="400" height="2048" alt="WhatsApp Image 2026-07-19 at 18 55 02 (3)" src="https://github.com/user-attachments/assets/899ef0c2-f9a1-4cc9-85d5-039ab3fd7047" />
+
+<img width="400" height="2048" alt="WhatsApp Image 2026-07-19 at 18 55 02 (2)" src="https://github.com/user-attachments/assets/95fa0cf5-4eaa-4896-8b26-3660d062a352" />
 
 
 
