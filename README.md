@@ -133,7 +133,8 @@ Daily Scrum toplantıları kolay iletişime geçebilmek nedeniyle Whatsapp üzer
 ## Ürün Durumu: Ekran Görüntüleri
 
 Ürün Durumu ekran görüntüleri aşağıdaki gibidir.
-
+![Sprint 2 Dashboard UI](sprint2-dashboard.png)
+![Sprint 2 Chat UI ve Chat History](sprint2-chat-ui-chat-history.png)
 
 ## Sprint Review
 
