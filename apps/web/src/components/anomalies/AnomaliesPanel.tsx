@@ -9,6 +9,7 @@ import type { AnomalyFinding, AnomalySeverity } from "@/types";
 import type { AnomalyStatusFilter } from "@/services/anomaly-service";
 import { getAnomalies, resolveAnomaly } from "@/services/anomaly-service";
 import { AnomalyCard } from "./AnomalyCard";
+import { AnomalySummaryCards } from "./AnomalySummaryCards";
 
 const statusFilters: Array<{
   label: string;
@@ -34,6 +35,7 @@ export function AnomaliesPanel() {
   const { user } = useUser();
 
   const [items, setItems] = useState<AnomalyFinding[]>([]);
+  const [summaryItems, setSummaryItems] = useState<AnomalyFinding[]>([]);
   const [statusFilter, setStatusFilter] =
     useState<AnomalyStatusFilter>("open");
   const [severityFilter, setSeverityFilter] =
@@ -46,6 +48,13 @@ export function AnomaliesPanel() {
   const role = user?.publicMetadata?.role ?? "user";
   const isAdmin = role === "admin";
 
+  const totalCount = summaryItems.length;
+  const openCount = summaryItems.filter((item) => !item.isResolved).length;
+  const resolvedCount = summaryItems.filter((item) => item.isResolved).length;
+  const highRiskCount = summaryItems.filter(
+  (item) => item.severity === "high"
+).length;
+
   useEffect(() => {
     let isMounted = true;
 
@@ -56,15 +65,23 @@ export function AnomaliesPanel() {
 
         const token = await getToken();
 
-        const response = await getAnomalies({
-          severity: severityFilter,
-          status: statusFilter,
-          token,
-        });
+        const [listResponse, summaryResponse] = await Promise.all([
+  getAnomalies({
+    severity: severityFilter,
+    status: statusFilter,
+    token,
+  }),
+  getAnomalies({
+    severity: "all",
+    status: "all",
+    token,
+  }),
+]);
 
-        if (isMounted) {
-          setItems(response.items);
-        }
+if (isMounted) {
+  setItems(listResponse.items);
+  setSummaryItems(summaryResponse.items);
+}
       } catch {
         if (isMounted) {
           setErrorMessage("Anomaliler yüklenirken bir hata oluştu.");
@@ -92,10 +109,16 @@ export function AnomaliesPanel() {
       await resolveAnomaly(anomalyId, token);
 
       setItems((currentItems) =>
-        currentItems.map((item) =>
-          item.id === anomalyId ? { ...item, isResolved: true } : item
-        )
-      );
+      currentItems.map((item) =>
+    item.id === anomalyId ? { ...item, isResolved: true } : item
+  )
+);
+
+setSummaryItems((currentItems) =>
+  currentItems.map((item) =>
+    item.id === anomalyId ? { ...item, isResolved: true } : item
+  )
+);
     } catch {
       setErrorMessage("Anomali çözüldü olarak işaretlenemedi.");
     } finally {
@@ -121,6 +144,13 @@ export function AnomaliesPanel() {
           Yenile
         </Button>
       </div>
+
+              <AnomalySummaryCards
+              totalCount={totalCount}
+              openCount={openCount}
+              highRiskCount={highRiskCount}
+              resolvedCount={resolvedCount}
+              />
 
       <div className="flex flex-wrap gap-3">
         <div className="flex flex-wrap gap-2">
