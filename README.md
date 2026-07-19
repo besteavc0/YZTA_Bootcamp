@@ -103,3 +103,44 @@ Sprint Review katılımcıları: Beste (Product Owner), Hatice (Scrum Master).
 - Ekibin bir kısmı sprint görevlerini tamamlayamadı; bu durum Sprint 2'nin bağımlı görevlerini (veritabanı üzerine kurulacak backend işleri, frontend'e bağlı özellikler) geciktirme riski taşıyor. 
 - Sprint 2'de değiştirilecek: Görev ilerlemesi daily scrum'da yüzde tamamlanma veya blocker bildirimiyle daha net paylaşılacak; geciken görevler için sprint ortasında bir ara kontrol (mid-sprint check-in) yapılacak; tamamlanamayan görevlerin nedeni (zaman yönetimi mi, teknik engel mi) netleştirilip gerekirse görev yeniden dağıtılacak.
 
+---
+
+# SPRINT 2
+
+- **Sprint içi puan değerlendirmesi** 39 olarak belirlenmiştir.
+- **Puan tamamlama mantığı:**
+- **Sprint Hedefi:** .
+- **Definition of Done:** `
+- **Daily Scrum:** 
+
+
+- **Görev Dağılımı Mantığı:** 
+- **Sprint 2 Görev Sahipleri:** 
+- **Sprint 2 board update:** Sprint Board Screenshot:
+
+
+**Sprint 2 Görev Özeti**
+
+
+
+
+## Daily Scrum
+
+Daily Scrum toplantıları kolay iletişime geçebilmek nedeniyle Whatsapp üzerinden yazılı olarak yürütülmüştür. Örnek ekran görüntüleri:
+
+
+
+## Ürün Durumu: Ekran Görüntüleri
+
+Ürün Durumu ekran görüntüleri aşağıdaki gibidir.
+
+
+## Sprint Review
+
+
+
+
+## Sprint Retrospective
+
+
+
