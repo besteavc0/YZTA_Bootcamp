@@ -1,3 +1,4 @@
+
 # Takım İsmi
 
 Ekip 86
@@ -113,11 +114,8 @@ Sprint Review katılımcıları: Beste (Product Owner), Hatice (Scrum Master).
 - **Definition of Done:** Tarayıcıdan login olunur, soru sorulur, anomaliler görüntülenir, Excel fark raporu üretilir, admin/user rol ayrımı çalışır.
 - **Daily Scrum:** Whatsapp üzerinden günlük görüşmeler sağlanmıştır. Ekip tek grup olarak ilerlemiştir.
 
-
-- **Görev Dağılımı Mantığı:** 
-- **Sprint 2 Görev Sahipleri:** 
 - **Sprint 2 board update:** Sprint Board Screenshot:
-
+<img width="1400" height="750" alt="Ekran görüntüsü 2026-07-19 220416" src="https://github.com/user-attachments/assets/787a4b27-f3c5-4f0a-b868-d2fef7b580df" />
 
 **Sprint 2 Görev Özeti**
 
