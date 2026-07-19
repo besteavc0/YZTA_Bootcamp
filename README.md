@@ -107,11 +107,11 @@ Sprint Review katılımcıları: Beste (Product Owner), Hatice (Scrum Master).
 
 # SPRINT 2
 
-- **Sprint içi puan değerlendirmesi** 39 olarak belirlenmiştir.
-- **Puan tamamlama mantığı:**
-- **Sprint Hedefi:** .
-- **Definition of Done:** `
-- **Daily Scrum:** 
+- **Sprint içi puan değerlendirmesi** 43 olarak belirlenmiştir.
+- **Puan tamamlama mantığı:** Proje boyunca tamamlanması gereken backlog puanı 115'tir. İkinci Sprint için bitirilmesi istenilen puan sayısı 43 olarak belirlenmiştir.
+- **Sprint Hedefi:** Kullanılabilir chat arayüzü, anomali paneli, Excel vs ERP karşılaştırma modülü çalışır; Clerk auth ve RBAC aktif; tenant izolasyonu doğrulanır.
+- **Definition of Done:** Tarayıcıdan login olunur, soru sorulur, anomaliler görüntülenir, Excel fark raporu üretilir, admin/user rol ayrımı çalışır.
+- **Daily Scrum:** Whatsapp üzerinden günlük görüşmeler sağlanmıştır. Ekip tek grup olarak ilerlemiştir.
 
 
 - **Görev Dağılımı Mantığı:** 
@@ -121,7 +121,22 @@ Sprint Review katılımcıları: Beste (Product Owner), Hatice (Scrum Master).
 
 **Sprint 2 Görev Özeti**
 
-
+| Task | Atanan | SP | Epic |
+|------|--------|----|------|
+| TASK-015 Chat UI | P3 | 5 | Chat |
+| TASK-016 Sohbet geçmişi | P3 | 2 | Chat |
+| TASK-017 Clerk JWT backend | P1 | 3 | Güvenlik |
+| TASK-018 RBAC middleware | P1 | 2 | Güvenlik |
+| TASK-019 Audit log servisi | P4 | 3 | Güvenlik |
+| TASK-020 ERP credential şifreleme | P4 | 2 | Güvenlik |
+| TASK-021 Güvenlik & tenant izolasyon testleri | P1 | 2 | Güvenlik |
+| TASK-022 Anomali kural motoru | P4 | 5 | Anomali |
+| TASK-023 Celery anomali job | P2 | 2 | Anomali |
+| TASK-024 Anomali UI | P3 | 3 | Anomali |
+| TASK-025 Excel upload backend | P4 | 4 | Excel |
+| TASK-026 Excel diff motoru | P4 | 5 | Excel |
+| TASK-027 Excel diff UI | P3 | 3 | Excel |
+| TASK-028 ERP bağlantı UI | P3 | 2 | ERP |
 
 
 ## Daily Scrum
