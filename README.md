@@ -161,11 +161,11 @@ Daily Scrum toplantıları kolay iletişime geçebilmek nedeniyle Whatsapp üzer
 ## Sprint Review
 Sprint 2 hedefine kısmen ulaşıldı.
 
--Sprint 1'den kalan eksikler bu sprintte tamamlandı. Backend tarafında güvenlik, anomali tespiti ve Excel karşılaştırma özellikleri kod olarak tamamlanıp GitHub'a yüklendi. Anomali tespitinin otomatik periyodik çalışmasını sağlayacak arka plan görevi , bağımlı olduğu anomali motorunun gecikmeli tamamlanması nedeniyle bu sprintte yetiştirilemedi.
+- Sprint 1'den kalan eksikler bu sprintte tamamlandı. Backend tarafında güvenlik, anomali tespiti ve Excel karşılaştırma özellikleri kod olarak tamamlanıp GitHub'a yüklendi. Anomali tespitinin otomatik periyodik çalışmasını sağlayacak arka plan görevi , bağımlı olduğu anomali motorunun gecikmeli tamamlanması nedeniyle bu sprintte yetiştirilemedi.
 
--Frontend tarafında Excel yükleme ve Excel yönetim ekranları henüz hazır değil.
+- Frontend tarafında Excel yükleme ve Excel yönetim ekranları henüz hazır değil.
 
--Yazılan backend kodları mantık düzeyinde test edildi, ancak canlı bir ortamda uçtan uca test edilemedi; bu, ilgili altyapının henüz ana koda birleştirilmemiş olmasından kaynaklanıyor.
+- Yazılan backend kodları mantık düzeyinde test edildi, ancak canlı bir ortamda uçtan uca test edilemedi; bu, ilgili altyapının henüz ana koda birleştirilmemiş olmasından kaynaklanıyor.
 
 Sprint Review katılımcıları: Beste (Product Owner), Medine, Yusuf, Hatice (Scrum Master).
 
