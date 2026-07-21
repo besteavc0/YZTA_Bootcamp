@@ -1,5 +1,7 @@
 export type ExcelCompareStatus = "matched" | "different" | "missing";
 
+export type ExcelCompareStatusFilter = ExcelCompareStatus | "all";
+
 export type ExcelCompareResult = {
   id: string;
   rowNumber: number;

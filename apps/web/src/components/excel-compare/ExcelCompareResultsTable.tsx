@@ -5,16 +5,18 @@ import { ExcelCompareStatusBadge } from "./ExcelCompareStatusBadge";
 
 type ExcelCompareResultsTableProps = {
   results: ExcelCompareResult[];
+  emptyMessage?: string;
 };
 
 export function ExcelCompareResultsTable({
   results,
+  emptyMessage = "Henüz karşılaştırma sonucu bulunmuyor.",
 }: ExcelCompareResultsTableProps) {
   if (results.length === 0) {
     return (
       <Card>
         <CardContent className="p-6 text-sm text-muted-foreground">
-          Henüz karşılaştırma sonucu bulunmuyor.
+          {emptyMessage}
         </CardContent>
       </Card>
     );
