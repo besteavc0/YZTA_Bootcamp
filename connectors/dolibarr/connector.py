@@ -1,21 +1,3 @@
-"""
-Dolibarr ERP connector.
-
-Dolibarr'ın REST API'sinden (DOLAPIKEY auth) müşteri, ürün/stok ve sipariş
-verisini çekip ERPilot'un canonical şemasına normalize eder.
-
-Config alanları (erp_connections.config_encrypted içinde şifreli tutulur):
-    base_url : Dolibarr kök URL'i, ör. "http://localhost:8080"
-    api_key  : Dolibarr API anahtarı (DOLAPIKEY)
-
-Mapping (Dolibarr -> canonical):
-    thirdparties (mode=1, müşteri) -> canonical_customers
-        id/name/town  -> external_id/name/city
-    products                       -> canonical_inventory
-        ref/label/stock_reel/seuil_stock_alerte -> external_id/product_name/quantity/reorder_level
-    orders                         -> canonical_orders
-        ref/socid/date/total_ttc/statut -> external_id/customer_external_id/order_date/total_amount/status
-"""
 from __future__ import annotations
 
 import logging
@@ -48,12 +30,11 @@ class DolibarrConnector(ERPConnector):
         super().__init__(config)
         self.base_url = str(config.get("base_url", "")).rstrip("/")
         self.api_key = config.get("api_key", "")
-        # sync_incremental sonucunda canonical satırları burada toplanır (test/entegrasyon için)
         self.customers: list[dict] = []
         self.inventory: list[dict] = []
         self.orders: list[dict] = []
 
-    # ---- yardımcılar ----
+  
     @property
     def _api_root(self) -> str:
         return f"{self.base_url}/api/index.php"
@@ -77,8 +58,7 @@ class DolibarrConnector(ERPConnector):
                 if params:
                     q.update(params)
                 resp = client.get(f"{self._api_root}/{endpoint}", headers=self._headers, params=q)
-                if resp.status_code == 404:
-                    # Dolibarr boş listede bazen 404 döndürür
+                if resp.status_code == 404
                     break
                 resp.raise_for_status()
                 data = resp.json()
@@ -90,7 +70,7 @@ class DolibarrConnector(ERPConnector):
                 page += 1
         return results
 
-    # ---- ERPConnector sözleşmesi ----
+
     def test_connection(self) -> bool:
         """API'ye basit bir istek atarak bağlantıyı ve api_key'i doğrular."""
         if not self.base_url or not self.api_key:
@@ -103,7 +83,6 @@ class DolibarrConnector(ERPConnector):
                 )
                 if resp.status_code == 200:
                     return True
-                # /status kapalıysa thirdparties ile dene
                 resp2 = client.get(
                     f"{self._api_root}/thirdparties",
                     headers=self._headers,
@@ -132,25 +111,16 @@ class DolibarrConnector(ERPConnector):
         if value is None or value == "":
             return datetime.now(timezone.utc).isoformat()
         try:
-            # Unix timestamp (Dolibarr çoğu tarihi epoch olarak döner)
+            # Unix timestamp (çoğu tarihi epoch olarak döndüğü için)
             ts = int(value)
             return datetime.fromtimestamp(ts, tz=timezone.utc).isoformat()
         except (ValueError, TypeError):
             return str(value)
 
     def sync_incremental(self, since: datetime | None = None) -> SyncResult:
-        """
-        Dolibarr'dan veriyi çekip canonical formata dönüştürür.
-
-        Not: Bu metod canonical satırları self.customers/inventory/orders içine
-        doldurur ve toplam satır sayısını döndürür. DB'ye yazma işlemi çağıran
-        katmanda (Celery sync task / servis) yapılır; böylece connector DB'den
-        bağımsız kalır ve test edilebilir olur.
-        """
         try:
             rows_synced = 0
 
-            # 1) Müşteriler (thirdparties, mode=1 -> müşteri)
             raw_customers = self._get("thirdparties", {"mode": 1})
             for c in raw_customers:
                 self.customers.append(
@@ -163,8 +133,6 @@ class DolibarrConnector(ERPConnector):
                     }
                 )
             rows_synced += len(raw_customers)
-
-            # 2) Ürünler / stok (products)
             raw_products = self._get("products")
             for p in raw_products:
                 self.inventory.append(
@@ -179,7 +147,6 @@ class DolibarrConnector(ERPConnector):
                 )
             rows_synced += len(raw_products)
 
-            # 3) Siparişler (orders)
             raw_orders = self._get("orders")
             for o in raw_orders:
                 statut = str(o.get("statut", o.get("status", "")))
