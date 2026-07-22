@@ -1,4 +1,4 @@
-import { Database, PlugZap } from "lucide-react";
+import { Database, PlugZap, Settings } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,6 +11,7 @@ type ErpConnectionCardProps = {
   connection: ErpConnection;
   isTesting: boolean;
   onTestConnection: (connectionId: string) => void;
+  onEditConnection: (connectionId: string) => void;
 };
 
 function formatDateTime(value: string | null) {
@@ -28,6 +29,7 @@ export function ErpConnectionCard({
   connection,
   isTesting,
   onTestConnection,
+  onEditConnection,
 }: ErpConnectionCardProps) {
   return (
     <Card>
@@ -70,15 +72,26 @@ export function ErpConnectionCard({
           </div>
         </div>
 
-        <Button
-          type="button"
-          variant="outline"
-          disabled={isTesting}
-          onClick={() => onTestConnection(connection.id)}
-        >
-          <PlugZap className="mr-2 h-4 w-4" />
-          {isTesting ? "Test Ediliyor..." : "Bağlantıyı Test Et"}
-        </Button>
+        <div className="flex flex-wrap gap-3">
+  <Button
+    type="button"
+    variant="outline"
+    disabled={isTesting}
+    onClick={() => onTestConnection(connection.id)}
+  >
+    <PlugZap className="mr-2 h-4 w-4" />
+    {isTesting ? "Test Ediliyor..." : "Bağlantıyı Test Et"}
+  </Button>
+
+  <Button
+    type="button"
+    variant="secondary"
+    onClick={() => onEditConnection(connection.id)}
+  >
+    <Settings className="mr-2 h-4 w-4" />
+    Ayarları Düzenle
+  </Button>
+</div>
       </CardContent>
     </Card>
   );

@@ -20,12 +20,29 @@ export type TestErpConnectionResponse = {
   testedAt: string;
 };
 
+export type ErpProviderFilter = ErpProvider | "all";
+
+export type ErpConnectionStatusFilter = ErpConnectionStatus | "all";
+
+export type UpdateErpConnectionPayload = {
+  name: string;
+  description: string;
+  host: string;
+  companyCode: string;
+};
+
 type GetErpConnectionsParams = {
   token?: string | null;
 };
 
 type TestErpConnectionParams = {
   connectionId: string;
+  token?: string | null;
+};
+
+type UpdateErpConnectionParams = {
+  connectionId: string;
+  payload: UpdateErpConnectionPayload;
   token?: string | null;
 };
 
@@ -124,6 +141,46 @@ export async function testErpConnection({
 
   if (!response.ok) {
     throw new Error("ERP bağlantı testi başarısız oldu.");
+  }
+
+  return response.json();
+}
+
+export async function updateErpConnection({
+  connectionId,
+  payload,
+  token,
+}: UpdateErpConnectionParams): Promise<ErpConnection> {
+  if (useMockErpConnections) {
+    await new Promise((resolve) => setTimeout(resolve, 600));
+
+    const connection = mockConnections.find((item) => item.id === connectionId);
+
+    if (!connection) {
+      throw new Error("ERP bağlantısı bulunamadı.");
+    }
+
+    return {
+      ...connection,
+      ...payload,
+    };
+  }
+
+  const response = await fetch(`/api/erp-connections/${connectionId}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token
+        ? {
+            Authorization: `Bearer ${token}`,
+          }
+        : {}),
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    throw new Error("ERP bağlantısı güncellenemedi.");
   }
 
   return response.json();

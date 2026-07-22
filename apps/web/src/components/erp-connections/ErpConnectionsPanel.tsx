@@ -6,12 +6,18 @@ import { useAuth } from "@clerk/nextjs";
 import {
   getErpConnections,
   testErpConnection,
+  updateErpConnection,
   type ErpConnection,
+  type ErpConnectionStatusFilter,
+  type ErpProviderFilter,
   type TestErpConnectionResponse,
+  type UpdateErpConnectionPayload,
 } from "@/services/erp-connection-service";
 
 import { ErpConnectionCard } from "./ErpConnectionCard";
 import { ErpConnectionSummaryCards } from "./ErpConnectionSummaryCards";
+import { ErpConnectionFilters } from "./ErpConnectionFilters";
+import { ErpConnectionSettingsForm } from "./ErpConnectionSettingsForm";
 
 export function ErpConnectionsPanel() {
   const { getToken } = useAuth();
@@ -24,6 +30,17 @@ export function ErpConnectionsPanel() {
   const [testResult, setTestResult] =
     useState<TestErpConnectionResponse | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const [searchQuery, setSearchQuery] = useState("");
+const [providerFilter, setProviderFilter] =
+  useState<ErpProviderFilter>("all");
+const [statusFilter, setStatusFilter] =
+  useState<ErpConnectionStatusFilter>("all");
+const [refreshKey, setRefreshKey] = useState(0);
+const [editingConnectionId, setEditingConnectionId] = useState<string | null>(
+  null
+);
+const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -63,7 +80,7 @@ export function ErpConnectionsPanel() {
     return () => {
       isMounted = false;
     };
-  }, [getToken]);
+  }, [getToken, refreshKey]);
 
   async function handleTestConnection(connectionId: string) {
     setTestingConnectionId(connectionId);
@@ -106,6 +123,73 @@ export function ErpConnectionsPanel() {
     }
   }
 
+  const filteredConnections = connections.filter((connection) => {
+  const normalizedSearchQuery = searchQuery.trim().toLowerCase();
+
+  const searchableText = [
+    connection.name,
+    connection.description,
+    connection.provider,
+    connection.status,
+    connection.host,
+    connection.companyCode,
+  ]
+    .join(" ")
+    .toLowerCase();
+
+  const matchesSearch =
+    normalizedSearchQuery.length === 0 ||
+    searchableText.includes(normalizedSearchQuery);
+
+  const matchesProvider =
+    providerFilter === "all" || connection.provider === providerFilter;
+
+  const matchesStatus =
+    statusFilter === "all" || connection.status === statusFilter;
+
+  return matchesSearch && matchesProvider && matchesStatus;
+});
+
+const editingConnection =
+  connections.find((connection) => connection.id === editingConnectionId) ??
+  null;
+
+async function handleSaveConnection(payload: UpdateErpConnectionPayload) {
+  if (!editingConnectionId) {
+    return;
+  }
+
+  setIsSaving(true);
+  setErrorMessage(null);
+
+  try {
+    const token = await getToken();
+
+    const response = await updateErpConnection({
+      connectionId: editingConnectionId,
+      payload,
+      token,
+    });
+
+    setConnections((currentConnections) =>
+      currentConnections.map((connection) =>
+        connection.id === response.id ? response : connection
+      )
+    );
+
+    setEditingConnectionId(null);
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "ERP bağlantısı kaydedilirken beklenmeyen bir hata oluştu.";
+
+    setErrorMessage(message);
+  } finally {
+    setIsSaving(false);
+  }
+}
+
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -133,22 +217,46 @@ export function ErpConnectionsPanel() {
 
       <ErpConnectionSummaryCards connections={connections} />
 
-      {connections.length > 0 ? (
-        <div className="grid gap-4">
-          {connections.map((connection) => (
-            <ErpConnectionCard
-              key={connection.id}
-              connection={connection}
-              isTesting={testingConnectionId === connection.id}
-              onTestConnection={handleTestConnection}
-            />
-          ))}
-        </div>
-      ) : (
-        <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
-          Henüz ERP bağlantısı tanımlanmadı.
-        </div>
-      )}
+<ErpConnectionFilters
+  searchQuery={searchQuery}
+  providerFilter={providerFilter}
+  statusFilter={statusFilter}
+  resultCount={filteredConnections.length}
+  totalCount={connections.length}
+  isRefreshing={isLoading}
+  onSearchChange={setSearchQuery}
+  onProviderFilterChange={setProviderFilter}
+  onStatusFilterChange={setStatusFilter}
+  onRefresh={() => setRefreshKey((currentValue) => currentValue + 1)}
+/>
+
+{editingConnection ? (
+  <ErpConnectionSettingsForm
+    key={editingConnection.id}
+    connection={editingConnection}
+    isSaving={isSaving}
+    onCancel={() => setEditingConnectionId(null)}
+    onSave={handleSaveConnection}
+  />
+) : null}
+
+{filteredConnections.length > 0 ? (
+  <div className="grid gap-4">
+    {filteredConnections.map((connection) => (
+      <ErpConnectionCard
+        key={connection.id}
+        connection={connection}
+        isTesting={testingConnectionId === connection.id}
+        onTestConnection={handleTestConnection}
+        onEditConnection={setEditingConnectionId}
+      />
+    ))}
+  </div>
+) : (
+  <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
+    Seçili filtrelere uygun ERP bağlantısı bulunamadı.
+  </div>
+)}
     </div>
   );
 }
