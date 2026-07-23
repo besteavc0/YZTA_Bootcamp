@@ -36,6 +36,19 @@ type GetDigestByDateParams = {
 
 const useMockDigests = process.env.NEXT_PUBLIC_USE_MOCK_DIGESTS !== "false";
 
+function getTodayDateValue() {
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function isFutureDate(value: string) {
+  return value > getTodayDateValue();
+}
+
 function createMockDigest(date: string): DailyDigest {
   return {
     id: `digest-${date}`,
@@ -125,7 +138,7 @@ export async function getLatestDigest({
   if (useMockDigests) {
     await new Promise((resolve) => setTimeout(resolve, 600));
 
-    const today = new Date().toISOString().slice(0, 10);
+    const today = getTodayDateValue();
 
     return createMockDigest(today);
   }
@@ -154,10 +167,14 @@ export async function getDigestByDate({
   token,
 }: GetDigestByDateParams): Promise<DailyDigest | null> {
   if (useMockDigests) {
-    await new Promise((resolve) => setTimeout(resolve, 600));
+  await new Promise((resolve) => setTimeout(resolve, 600));
 
-    return createMockDigest(date);
+  if (isFutureDate(date)) {
+    return null;
   }
+
+  return createMockDigest(date);
+}
 
   const response = await fetch(`/api/v1/digest?date=${date}`, {
     headers: token

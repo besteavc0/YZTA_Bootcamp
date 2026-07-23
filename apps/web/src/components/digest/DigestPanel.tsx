@@ -12,8 +12,23 @@ import { DigestCard } from "./DigestCard";
 import { DigestHighlights } from "./DigestHighlights";
 import { DigestMetricCard } from "./DigestMetricCard";
 
+function formatDateInputValue(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function getDateValueWithOffset(dayOffset: number) {
+  const date = new Date();
+  date.setDate(date.getDate() + dayOffset);
+
+  return formatDateInputValue(date);
+}
+
 function getTodayDateValue() {
-  return new Date().toISOString().slice(0, 10);
+  return getDateValueWithOffset(0);
 }
 
 export function DigestPanel() {
@@ -96,23 +111,39 @@ export function DigestPanel() {
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-3">
-          <input
-            type="date"
-            value={selectedDate}
-            onChange={(event) => setSelectedDate(event.target.value)}
-            className="h-10 rounded-md border bg-background px-3 text-sm outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
-          />
+     <div className="flex flex-wrap gap-3">
+  <Button
+    type="button"
+    variant={selectedDate === getTodayDateValue() ? "default" : "outline"}
+    onClick={() => setSelectedDate(getTodayDateValue())}
+  >
+    Bugün
+  </Button>
 
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setRefreshKey((currentValue) => currentValue + 1)}
-          >
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Yenile
-          </Button>
-        </div>
+  <Button
+    type="button"
+    variant={selectedDate === getDateValueWithOffset(-1) ? "default" : "outline"}
+    onClick={() => setSelectedDate(getDateValueWithOffset(-1))}
+  >
+    Dün
+  </Button>
+
+  <input
+    type="date"
+    value={selectedDate}
+    onChange={(event) => setSelectedDate(event.target.value)}
+    className="h-10 rounded-md border bg-background px-3 text-sm outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
+  />
+
+  <Button
+    type="button"
+    variant="outline"
+    onClick={() => setRefreshKey((currentValue) => currentValue + 1)}
+  >
+    <RefreshCw className="mr-2 h-4 w-4" />
+    Yenile
+  </Button>
+</div>
       </div>
 
       {errorMessage ? (
