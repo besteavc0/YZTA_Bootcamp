@@ -1,10 +1,17 @@
-export default function AuditLogsPage() {
+import { AuditLogPanel } from "@/components/admin/AuditLogPanel";
+
+export default function AuditLogPage() {
   return (
-    <section>
-      <h1 className="text-3xl font-bold">Audit Logları</h1>
-      <p className="mt-2 text-muted-foreground">
-        Sistem hareketleri admin kullanıcılar için burada listelenecek.
-      </p>
+    <section className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">Audit Logları</h1>
+        <p className="text-muted-foreground">
+          Sistemdeki kritik işlemleri, kullanıcı aksiyonlarını ve güvenlik
+          olaylarını takip et.
+        </p>
+      </div>
+
+      <AuditLogPanel />
     </section>
   );
 }
