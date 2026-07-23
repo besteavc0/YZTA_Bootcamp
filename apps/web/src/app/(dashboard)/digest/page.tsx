@@ -1,10 +1,17 @@
+import { DigestPanel } from "@/components/digest/DigestPanel";
+
 export default function DigestPage() {
   return (
-    <section>
-      <h1 className="text-3xl font-bold">Günlük Özet</h1>
-      <p className="mt-2 text-muted-foreground">
-        Sabah özeti ekranı Sprint 3&apos;te burada geliştirilecek.
-      </p>
+    <section className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">Günlük Özet</h1>
+        <p className="text-muted-foreground">
+          ERP verilerinden oluşturulan sabah yönetici özetini, metrikleri ve öne
+          çıkan aksiyonları görüntüle.
+        </p>
+      </div>
+
+      <DigestPanel />
     </section>
   );
 }
