@@ -18,7 +18,6 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
-
   redis:
     image: redis:7-alpine
     container_name: erpilot_redis
@@ -30,10 +29,10 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
-
   api:
     build:
-      context: ./apps/api
+      context: .
+      dockerfile: apps/api/Dockerfile
     container_name: erpilot_api
     restart: unless-stopped
     env_file: .env
@@ -46,20 +45,19 @@ services:
         condition: service_healthy
     volumes:
       - ./apps/api:/app
-
   worker:
     build:
-      context: ./apps/api
+      context: .
+      dockerfile: apps/api/Dockerfile
     container_name: erpilot_worker
     restart: unless-stopped
-    command: ["echo", "worker taski TASK-007de eklenecek"]
+    command: ["celery", "-A", "workers.celery_app", "worker", "--loglevel=info"]
     env_file: .env
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
-
   web:
     build:
       context: ./apps/web
@@ -69,7 +67,6 @@ services:
       - "3000:3000"
     depends_on:
       - api
-
 volumes:
   pgdata:
 
