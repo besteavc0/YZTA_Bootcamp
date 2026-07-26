@@ -75,7 +75,7 @@ class AnomalyService:
                 resource_external_id=resource_external_id,
                 description=description,
                 severity=severity,
-                detected_at=datetime.utcnow(),
+                detected_at=datetime.combine(datetime.utcnow().date(), time.min),
             )
             .on_conflict_do_nothing(constraint="uq_finding_dedupe")
         )

@@ -33,6 +33,36 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "..", "data", "sample")
 GLOSSARY_PATH = os.path.join(BASE_DIR, "..", "data", "business_glossary.json")
 
+# TASK-022 kabul kriteri: 5 anomali kurali anomaly_rules tablosuna seed edilmeli.
+# name alanlari apps/api/app/services/anomaly_service.py'deki RULE_* sabitleriyle
+# BIREBIR ayni olmak zorunda (AnomalyService._get_rule_id bu isimle arar).
+ANOMALY_RULES = [
+    {
+        "name": "gece_saati_yuksek_tutarli_siparis",
+        "description": "Gece 00:00-06:00 arasi 50.000 TL uzeri siparis",
+        "severity": "high",
+    },
+    {
+        "name": "kisa_surede_cok_siparis",
+        "description": "Ayni musteriden 1 saat icinde 5'ten fazla siparis",
+        "severity": "medium",
+    },
+    {
+        "name": "negatif_veya_sifir_stok",
+        "description": "Stok miktari 0 veya altinda",
+        "severity": "high",
+    },
+    {
+        "name": "ortalamanin_3_katindan_fazla_tutar",
+        "description": "Siparis tutari genel ortalamanin 3 katindan fazla",
+        "severity": "medium",
+    },
+    {
+        "name": "30_gun_siparis_vermeyen_musteri",
+        "description": "Son 30 gunde siparis vermeyen musteri (churn riski)",
+        "severity": "low",
+    },
+]
 
 def get_connection():
     return psycopg2.connect(DATABASE_URL)
@@ -198,6 +228,29 @@ def seed_glossary(cur):
         )
     return len(entries)
 
+def seed_anomaly_rules(cur):
+    """
+    TASK-022 kabul kriteri: 5 anomali kurali anomaly_rules tablosuna seed
+    edilmeli. anomaly_rules.name uzerinde UNIQUE constraint olmadigi icin
+    once var olup olmadigini kontrol edip, yoksa ekliyoruz.
+    """
+    inserted = 0
+    for rule in ANOMALY_RULES:
+        cur.execute(
+            "SELECT id FROM anomaly_rules WHERE name = %s LIMIT 1",
+            (rule["name"],),
+        )
+        if cur.fetchone():
+            continue
+        cur.execute(
+            """
+            INSERT INTO anomaly_rules (id, name, description, severity, is_active)
+            VALUES (%s, %s, %s, %s, TRUE)
+            """,
+            (str(uuid.uuid4()), rule["name"], rule["description"], rule["severity"]),
+        )
+        inserted += 1
+    return inserted
 
 def main():
     print(f"Veritabanina baglaniliyor: {DATABASE_URL}")
@@ -222,6 +275,8 @@ def main():
 
             n_glossary = seed_glossary(cur)
             print(f"business_glossary: {n_glossary} kayit islendi")
+            n_rules = seed_anomaly_rules(cur)
+            print(f"anomaly_rules: {n_rules} yeni kural eklendi")
 
         conn.commit()
         print("\nSeed islemi basariyla tamamlandi.")

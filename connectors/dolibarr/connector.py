@@ -58,7 +58,7 @@ class DolibarrConnector(ERPConnector):
                 if params:
                     q.update(params)
                 resp = client.get(f"{self._api_root}/{endpoint}", headers=self._headers, params=q)
-                if resp.status_code == 404
+                if resp.status_code == 404:
                     break
                 resp.raise_for_status()
                 data = resp.json()
