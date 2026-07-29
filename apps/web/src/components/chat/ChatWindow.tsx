@@ -13,8 +13,19 @@ import { MessageBubble } from "./MessageBubble";
 import { SuggestedQuestions } from "./SuggestedQuestions";
 import { TypingIndicator } from "./TypingIndicator";
 
+function createMessageId(prefix: string) {
+  if (
+    typeof globalThis.crypto !== "undefined" &&
+    typeof globalThis.crypto.randomUUID === "function"
+  ) {
+    return `${prefix}-${globalThis.crypto.randomUUID()}`;
+  }
+
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
 export function ChatWindow() {
-  const { getToken } = useAuth();
+  const { getToken, isLoaded, isSignedIn } = useAuth();
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [question, setQuestion] = useState("");
@@ -49,6 +60,18 @@ export function ChatWindow() {
   }, [messages, isSending]);
 
   async function sendQuestion(questionText: string) {
+
+    if (!isLoaded || !isSignedIn) {
+  setErrorMessage("Mesaj göndermek için giriş yapmalısın.");
+  return;
+}
+
+const token = await getToken();
+
+if (!token) {
+  setErrorMessage("Oturum bilgisi alınamadı. Lütfen tekrar giriş yap.");
+  return;
+}
     const trimmedQuestion = questionText.trim();
 
     if (!trimmedQuestion || isSending || isLoadingHistory) {
@@ -56,7 +79,7 @@ export function ChatWindow() {
     }
 
     const userMessage: ChatMessage = {
-      id: crypto.randomUUID(),
+      id: createMessageId("user"),
       role: "user",
       content: trimmedQuestion,
       createdAt: new Date().toISOString(),
@@ -72,7 +95,7 @@ export function ChatWindow() {
       const response = await sendChatMessage(trimmedQuestion, token);
 
       const assistantMessage: ChatMessage = {
-        id: crypto.randomUUID(),
+        id: createMessageId("user"),
         role: "assistant",
         content: response.answer,
         sqlQuery: response.sqlQuery,

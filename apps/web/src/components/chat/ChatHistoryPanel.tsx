@@ -12,7 +12,7 @@ import { getChatHistoryPairs } from "@/services/chat-service";
 const PAGE_SIZE = 5;
 
 export function ChatHistoryPanel() {
-  const { getToken } = useAuth();
+  const { getToken, isLoaded, isSignedIn } = useAuth();
   const { user } = useUser();
 
   const [items, setItems] = useState<ChatHistoryPair[]>([]);
@@ -25,11 +25,25 @@ export function ChatHistoryPanel() {
   const isAdmin = role === "admin";
 
   async function loadHistory(nextOffset = 0) {
+
+     if (!isSignedIn) {
+    return;
+  }
+
+   if (!isLoaded || !isSignedIn) {
+    return;
+  }
+
+  
     try {
       setIsLoading(true);
 
       const token = await getToken();
-      const response = await getChatHistoryPairs(nextOffset, PAGE_SIZE, token);
+
+      console.log("Chat history token var mı?", Boolean(token));
+      console.log("Token başlangıcı:", token?.slice(0, 20));
+      
+      const response = await getChatHistoryPairs(0, PAGE_SIZE, token);
 
       setItems((currentItems) =>
         nextOffset === 0
@@ -45,9 +59,9 @@ export function ChatHistoryPanel() {
   }
 
   useEffect(() => {
-    void loadHistory(0);
+    void loadHistory();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isLoaded, isSignedIn]);
 
   return (
     <Card className="h-[calc(100vh-8rem)] overflow-hidden">
