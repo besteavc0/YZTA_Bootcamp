@@ -19,9 +19,13 @@ export async function apiFetch<TResponse>(
     },
   });
 
-  if (!response.ok) {
-    throw new Error(`API request failed: ${response.status}`);
-  }
+ if (!response.ok) {
+  const errorBody = await response.text();
+
+  throw new Error(
+    `API request failed: ${response.status} - ${errorBody}`
+  );
+}
 
   return response.json() as Promise<TResponse>;
 }

@@ -6,6 +6,7 @@ import { UserButton, useUser } from "@clerk/nextjs";
 import {
   AlertTriangle,
   BarChart3,
+  Database,
   Bot,
   ClipboardList,
   FileSpreadsheet,
@@ -41,6 +42,11 @@ const mainNavItems = [
     href: "/excel-compare",
     icon: FileSpreadsheet,
   },
+  {
+  title: "ERP Bağlantıları",
+  href: "/erp-connections",
+  icon: Database,
+},
 ];
 
 const adminNavItems = [

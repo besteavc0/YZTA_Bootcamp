@@ -1,3 +1,4 @@
+
 # Takım İsmi
 
 Ekip 86
@@ -113,11 +114,8 @@ Sprint Review katılımcıları: Beste (Product Owner), Hatice (Scrum Master).
 - **Definition of Done:** Tarayıcıdan login olunur, soru sorulur, anomaliler görüntülenir, Excel fark raporu üretilir, admin/user rol ayrımı çalışır.
 - **Daily Scrum:** Whatsapp üzerinden günlük görüşmeler sağlanmıştır. Ekip tek grup olarak ilerlemiştir.
 
-
-- **Görev Dağılımı Mantığı:** 
-- **Sprint 2 Görev Sahipleri:** 
 - **Sprint 2 board update:** Sprint Board Screenshot:
-
+<img width="1400" height="750" alt="Ekran görüntüsü 2026-07-19 220416" src="https://github.com/user-attachments/assets/787a4b27-f3c5-4f0a-b868-d2fef7b580df" />
 
 **Sprint 2 Görev Özeti**
 
@@ -142,6 +140,15 @@ Sprint Review katılımcıları: Beste (Product Owner), Hatice (Scrum Master).
 ## Daily Scrum
 
 Daily Scrum toplantıları kolay iletişime geçebilmek nedeniyle Whatsapp üzerinden yazılı olarak yürütülmüştür. Örnek ekran görüntüleri:
+<img src="https://github.com/user-attachments/assets/6499a30f-fec7-451e-a973-c56493b20a41" width="250">
+<img src="https://github.com/user-attachments/assets/c6538f43-4c49-4dcf-b21d-2298ae624e7c" width="250">
+<img src="https://github.com/user-attachments/assets/2c648bb1-63a1-4b67-9d3b-1cd72adc7b26" width="250">
+<img src="https://github.com/user-attachments/assets/52bc15b7-3e77-43f8-a924-414537fca17f" width="250">
+<img src="https://github.com/user-attachments/assets/764c309b-b9ba-4194-9154-f1b6933de096" width="250">
+<img src="https://github.com/user-attachments/assets/62918be3-a568-4a01-9940-3933b0f0c56f" width="250">
+<img src="https://github.com/user-attachments/assets/ec177cdd-c381-4b35-88a8-52887f9602aa" width="250">
+<img src="https://github.com/user-attachments/assets/899ef0c2-f9a1-4cc9-85d5-039ab3fd7047" width="250">
+<img src="https://github.com/user-attachments/assets/95fa0cf5-4eaa-4896-8b26-3660d062a352" width="250">
 
 
 
@@ -152,11 +159,21 @@ Daily Scrum toplantıları kolay iletişime geçebilmek nedeniyle Whatsapp üzer
 ![Sprint 2 Chat UI ve Chat History](sprint2-chat-ui-chat-history.png)
 
 ## Sprint Review
+Sprint 2 hedefine kısmen ulaşıldı.
 
+- Sprint 1'den kalan eksikler bu sprintte tamamlandı. Backend tarafında güvenlik, anomali tespiti ve Excel karşılaştırma özellikleri kod olarak tamamlanıp GitHub'a yüklendi. Anomali tespitinin otomatik periyodik çalışmasını sağlayacak arka plan görevi , bağımlı olduğu anomali motorunun gecikmeli tamamlanması nedeniyle bu sprintte yetiştirilemedi.
 
+- Frontend tarafında Excel yükleme ve Excel yönetim ekranları henüz hazır değil.
 
+- Yazılan backend kodları mantık düzeyinde test edildi, ancak canlı bir ortamda uçtan uca test edilemedi; bu, ilgili altyapının henüz ana koda birleştirilmemiş olmasından kaynaklanıyor.
+
+Sprint Review katılımcıları: Beste (Product Owner), Medine, Yusuf, Hatice (Scrum Master).
 
 ## Sprint Retrospective
 
+- Sprint 1'den kalan veritabanı eksikleri kapatıldı; backend tarafında planlanan güvenlik, anomali ve Excel özellikleri kod olarak tamamlandı.
 
+- Bazı görevler birbirine bağımlı olduğu için bir gecikme, sonraki görevi de geciktirdi; frontend tarafında Excel ekranları yetişmedi; ekip genelinde görev durumlarının şeffaf paylaşılmaması sprint sonunda net bir tablo çıkarmayı zorlaştırdı.
+  
+- Sprint 3'de değiştirilecek: Birbirine bağımlı görevler arasında daha net zamanlama yapılacak; her görev sahibi sprint sonunda kendi durumunu yazılı olarak bildirecek; hazırlanan backend altyapısının ana koda birleştirilmesi önceliklendirilecek ki testler gecikmeden yapılabilsin.
 

@@ -1,3 +1,4 @@
+import { ChatHistoryPanel } from "@/components/chat/ChatHistoryPanel";
 import { ChatWindow } from "@/components/chat/ChatWindow";
 
 export default function ChatPage() {
@@ -10,7 +11,10 @@ export default function ChatPage() {
         </p>
       </div>
 
-      <ChatWindow />
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
+        <ChatWindow />
+        <ChatHistoryPanel />
+      </div>
     </section>
   );
 }

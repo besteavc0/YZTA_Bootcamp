@@ -1,5 +1,5 @@
 import { apiFetch } from "@/lib/api";
-import type { ChatMessage, SourceInfo } from "@/types";
+import type { ChatHistoryPair, ChatMessage, SourceInfo } from "@/types";
 
 export type SendChatMessageResponse = {
   answer: string;
@@ -7,16 +7,27 @@ export type SendChatMessageResponse = {
   sources?: SourceInfo[];
 };
 
+type ChatHistoryApiItem = {
+  id: string;
+  role: ChatMessage["role"];
+  content: string;
+  sql_query?: string | null;
+  sources?: SourceInfo[] | string | null;
+  created_at?: string;
+};
+
 type ChatApiResponse = {
   answer: string;
   sql_query?: string | null;
   sources?: SourceInfo[];
-  created_at?: string;
+  created_at: string;
 };
 
 type ChatHistoryApiResponse = {
-  items: ChatMessage[];
+  items: ChatHistoryApiItem[];
 };
+
+
 
 const useMockChat = process.env.NEXT_PUBLIC_USE_MOCK_CHAT !== "false";
 
@@ -46,7 +57,7 @@ export async function getChatHistory(
     }
   );
 
-  return response.items;
+  return response.items.map(mapChatHistoryItem);
 }
 
 export async function sendChatMessage(
@@ -92,3 +103,141 @@ async function sendMockChatMessage(
     ],
   };
 }
+
+const mockChatHistoryPairs: ChatHistoryPair[] = [
+  {
+    id: "history-1",
+    question: "Bu ay toplam satış tutarı ne kadar?",
+    answer:
+      "Bu ay toplam satış tutarı demo verilerine göre 245.000 TL olarak hesaplandı.",
+    sqlQuery:
+      "SELECT SUM(total_amount) FROM canonical_orders WHERE tenant_id = :tenant_id AND order_date >= date_trunc('month', CURRENT_DATE) LIMIT 100;",
+    sources: [
+      {
+        table: "canonical_orders",
+        filters: "bu ay, tenant_id=demo",
+      },
+    ],
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "history-2",
+    question: "Kritik stok seviyesinin altındaki ürünler hangileri?",
+    answer:
+      "Demo verilerine göre kritik stok seviyesinin altında 3 ürün bulunuyor.",
+    sqlQuery:
+      "SELECT product_name, quantity, reorder_level FROM canonical_inventory WHERE tenant_id = :tenant_id AND quantity < reorder_level LIMIT 100;",
+    sources: [
+      {
+        table: "canonical_inventory",
+        filters: "quantity < reorder_level",
+      },
+    ],
+    createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+  },
+  {
+    id: "history-3",
+    question: "En yüksek tutarlı 3 sipariş hangileri?",
+    answer:
+      "En yüksek tutarlı 3 sipariş sırasıyla ORD-1042, ORD-1018 ve ORD-1091 olarak listelendi.",
+    sqlQuery:
+      "SELECT external_id, total_amount FROM canonical_orders WHERE tenant_id = :tenant_id ORDER BY total_amount DESC LIMIT 3;",
+    sources: [
+      {
+        table: "canonical_orders",
+        filters: "en yüksek 3 sipariş",
+      },
+    ],
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+  },
+];
+
+export async function getChatHistoryPairs(
+  offset = 0,
+  limit = 5,
+  token?: string | null
+): Promise<{
+  items: ChatHistoryPair[];
+  hasMore: boolean;
+}> {
+  if (useMockChat) {
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    const items = mockChatHistoryPairs.slice(offset, offset + limit);
+
+    return {
+      items,
+      hasMore: offset + limit < mockChatHistoryPairs.length,
+    };
+  }
+
+  const response = await apiFetch<ChatHistoryApiResponse>(
+  `/api/v1/chat/history?offset=${offset}&limit=${limit}`,
+  {
+    token,
+    method: "GET",
+  }
+);
+
+const messages = response.items.map(mapChatHistoryItem);
+
+return {
+  items: mapMessagesToHistoryPairs(messages),
+  hasMore: response.items.length === limit,
+};
+}
+
+function normalizeSources(value: SourceInfo[] | string | null | undefined): SourceInfo[] {
+  if (Array.isArray(value)) {
+    return value;
+  }
+
+  if (typeof value === "string" && value.trim().length > 0) {
+    try {
+      const parsedValue = JSON.parse(value);
+
+      return Array.isArray(parsedValue) ? parsedValue : [];
+    } catch {
+      return [];
+    }
+  }
+
+  return [];
+}
+
+function mapChatHistoryItem(item: ChatHistoryApiItem): ChatMessage {
+  return {
+    id: item.id,
+    role: item.role,
+    content: item.content,
+    sqlQuery: item.sql_query ?? null,
+    sources: normalizeSources(item.sources),
+    createdAt: item.created_at ?? new Date().toISOString(),
+  };
+}
+
+function mapMessagesToHistoryPairs(messages: ChatMessage[]): ChatHistoryPair[] {
+  const pairs: ChatHistoryPair[] = [];
+
+  for (let index = 0; index < messages.length; index += 1) {
+    const currentMessage = messages[index];
+    const nextMessage = messages[index + 1];
+
+    if (
+      currentMessage.role === "user" &&
+      nextMessage?.role === "assistant"
+    ) {
+      pairs.push({
+        id: `${currentMessage.id}-${nextMessage.id}`,
+        question: currentMessage.content,
+        answer: nextMessage.content,
+        sqlQuery: nextMessage.sqlQuery ?? null,
+        sources: nextMessage.sources ?? [],
+        createdAt: nextMessage.createdAt,
+      });
+    }
+  }
+
+  return pairs;
+}
+

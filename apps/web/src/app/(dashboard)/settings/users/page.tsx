@@ -1,10 +1,18 @@
-export default function UsersPage() {
+import { UserManagementPanel } from "@/components/users/UserManagementPanel";
+
+export default function UserManagementPage() {
   return (
-    <section>
-      <h1 className="text-3xl font-bold">Kullanıcılar</h1>
-      <p className="mt-2 text-muted-foreground">
-        Kullanıcı yönetimi admin kullanıcılar için burada olacak.
-      </p>
+    <section className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">
+          Kullanıcı Yönetimi
+        </h1>
+        <p className="text-muted-foreground">
+          Kullanıcı rollerini, erişim durumlarını ve hesap aktivitelerini yönet.
+        </p>
+      </div>
+
+      <UserManagementPanel />
     </section>
   );
 }

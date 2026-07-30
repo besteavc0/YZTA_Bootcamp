@@ -53,3 +53,12 @@ export type AuditLog = {
   createdAt: string;
   details?: Record<string, unknown>;
 };
+
+export type ChatHistoryPair = {
+  id: string;
+  question: string;
+  answer: string;
+  sqlQuery?: string | null;
+  sources?: SourceInfo[];
+  createdAt: string;
+};

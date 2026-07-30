@@ -1,0 +1,9 @@
+Aşağıdaki metrikleri, Türkçe ve yönetici dostu bir özet paragrafa dönüştür.
+
+Kurallar:
+- En önemli gelişmeleri (artış/azalış, kritik anomaliler) vurgula.
+- 3-4 cümle ile sınırlı tut, teknik jargon kullanma.
+- Sayısal değerleri Türkçe formatta (₺, binlik ayraç) yaz.
+
+Metrikler:
+{metrics}
