@@ -177,3 +177,52 @@ Sprint Review katılımcıları: Beste (Product Owner), Medine, Yusuf, Hatice (S
   
 - Sprint 3'de değiştirilecek: Birbirine bağımlı görevler arasında daha net zamanlama yapılacak; her görev sahibi sprint sonunda kendi durumunu yazılı olarak bildirecek; hazırlanan backend altyapısının ana koda birleştirilmesi önceliklendirilecek ki testler gecikmeden yapılabilsin.
 
+## Kurulum & Çalıştırma
+
+Gereksinim: Docker & Docker Compose.
+
+```bash
+git clone https://github.com/besteavc0/YZTA_Bootcamp.git
+cd YZTA_Bootcamp
+cp .env.example .env        # OPENAI_API_KEY, Clerk ve DB değerlerini doldur
+docker compose up -d
+curl http://localhost:8000/health  
+```
+
+Servisler: `api` (8000, Swagger: `/docs`), `web` (3000), `postgres` (5432),
+`redis` (6379), `worker` (Celery).
+
+### Testler
+
+```bash
+cd apps/api
+pip install -r requirements.txt
+DATABASE_URL="postgresql+asyncpg://erpilot:erpilot@localhost:5432/erpilot" \
+ENVIRONMENT=development pytest tests/ -v
+```
+
+### Ücretsiz ERP Denemesi (Dolibarr)
+
+```bash
+docker compose -f docker-compose.dolibarr.yml up -d
+# Tarayıcı: http://localhost:8080  (bilgiler: admin / admin)
+```
+Ayrıntılı rehber: `docs/DOLIBARR_KURULUM.md`
+
+## Teknik Dokümantasyon
+
+| Doküman | İçerik |
+|---------|--------|
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Sistem mimarisi, bileşenler, veri akışı |
+| [`docs/SECURITY.md`](docs/SECURITY.md) | Güvenlik mimarisi ve kontroller |
+| [`docs/KVKK_DATA_POLICY.md`](docs/KVKK_DATA_POLICY.md) | KVKK veri politikası |
+| [`docs/RBAC_MATRIX.md`](docs/RBAC_MATRIX.md) | Rol bazlı erişim matrisi |
+| [`docs/SECURITY_TEST_RESULTS.md`](docs/SECURITY_TEST_RESULTS.md) | Güvenlik akış testi sonuçları |
+| [`docs/DOLIBARR_KURULUM.md`](docs/DOLIBARR_KURULUM.md) | Ücretsiz ERP kurulum rehberi |
+| [`RELEASE_NOTES.md`](RELEASE_NOTES.md) | Sürüm notları ve entegrasyon testi |
+
+## Teknoloji Yığını
+
+Backend: FastAPI, SQLAlchemy (async), Pydantic · AI: OpenAI (gpt-4o-mini),
+pgvector (RAG) · Worker: Celery + Redis · DB: PostgreSQL 16 + pgvector ·
+Frontend: Next.js + Clerk · Dağıtım: Docker Compose
