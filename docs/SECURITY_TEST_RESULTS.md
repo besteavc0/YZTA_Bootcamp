@@ -30,7 +30,7 @@ kontrol edilebilir.
 curl -i -X POST http://localhost:8000/api/v1/chat -H "Content-Type: application/json" -d '{"question":"test"}'
 # Beklenen: HTTP/1.1 401
 ```
-**Sonuç:** ☐ PASS 
+**Sonuç:** ☑ PASS
 
 ---
 
@@ -46,7 +46,7 @@ curl -i -X POST http://localhost:8000/api/v1/chat \
   -H "Content-Type: application/json" -d '{"question":"test"}'
 # Beklenen: HTTP/1.1 403
 ```
-**Sonuç:** ☐ PASS 
+**Sonuç:** ☑ PASS
 
 ---
 
@@ -61,7 +61,7 @@ curl -i http://localhost:8000/api/v1/audit/logs \
   -H "X-Dev-User-Id: <uid>" -H "X-Dev-Role: user" -H "X-Dev-Tenant-Id: <tid>"
 # Beklenen: HTTP/1.1 403  (audit yalnızca admin)
 ```
-**Sonuç:** ☐ PASS 
+**Sonuç:** ☑ PASS 
 > Not: Test sırasında audit endpoint'inin router.py'a bağlanmamış olduğu tespit
 > edildi (GET /api/v1/audit/logs 404 dönüyordu). Ayrı bir bugfix ile (fix/audit-router)
 
@@ -76,7 +76,7 @@ bir tenant başka tenant'ın verisini göremez.
 
 **Otomatik test:** `test_sql_without_tenant_filter_rejected`,
 `test_cross_tenant_union_rejected`, `test_valid_tenant_scoped_query_passes`
-**Sonuç:** ☐ PASS 
+**Sonuç:** ☑ PASS 
 
 ---
 
@@ -86,7 +86,7 @@ bir tenant başka tenant'ın verisini göremez.
 SQL, validator tarafından reddedilir.
 
 **Otomatik test:** `test_dangerous_sql_rejected[...]` (13 varyant)
-**Sonuç:** ☐ PASS 
+**Sonuç:** ☑ PASS 
 
 ---
 
@@ -98,7 +98,7 @@ bilgileri (config_encrypted) çözülemez ve işlem güvenli şekilde hata verir
 
 **Manuel doğrulama:** ERP bağlantısı çözme akışı yanlış anahtarla denenir;
 `InvalidToken`/şifre çözme hatası beklenir, düz metin DÖNMEZ.
-**Sonuç:** ☐ PASS 
+**Sonuç:** ☑ PASS 
 
 ---
 
