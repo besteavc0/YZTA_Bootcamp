@@ -1,19 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { ClerkProvider } from "@clerk/nextjs";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useState } from "react";
 
-type ReactQueryProviderProps = {
-  children: React.ReactNode;
-};
-
-export function ReactQueryProvider({ children }: ReactQueryProviderProps) {
+export function AppProviders({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
     () =>
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 30_000,
+            staleTime: 60 * 1000,
             refetchOnWindowFocus: false,
           },
         },
@@ -21,6 +18,8 @@ export function ReactQueryProvider({ children }: ReactQueryProviderProps) {
   );
 
   return (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    <ClerkProvider>
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    </ClerkProvider>
   );
 }
