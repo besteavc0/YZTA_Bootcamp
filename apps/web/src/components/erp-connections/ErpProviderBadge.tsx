@@ -5,9 +5,13 @@ type ErpProviderBadgeProps = {
 };
 
 const providerMap: Record<ErpProvider, string> = {
+  csv: "CSV",
   sap: "SAP",
+  sap_b1: "SAP B1",
   logo: "Logo",
   mikro: "Mikro",
+  erpnext: "ERPNext",
+  dolibarr: "Dolibarr",
 };
 
 export function ErpProviderBadge({ provider }: ErpProviderBadgeProps) {

@@ -116,7 +116,7 @@ async def trigger_sync(connection_id: str):
     # Celery task'ini tetikle (worker sureci ayri calisir)
     from workers.tasks.sync_erp import sync_erp_connection
 
-    async_result = sync_erp_connection.delay(connection_id, row["tenant_id"])
+    async_result = sync_erp_connection.delay(connection_id, str(row["tenant_id"]))
     return SyncTriggerResponse(
         message="Sync kuyruga alindi", task_id=async_result.id
     )

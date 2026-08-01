@@ -46,6 +46,7 @@ services:
     volumes:
       - ./apps/api:/app
       - ./connectors:/app/connectors
+      - ./workers:/app/workers
   worker:
     build:
       context: .
@@ -70,5 +71,6 @@ services:
       - api
 volumes:
   pgdata:
+
 
 
