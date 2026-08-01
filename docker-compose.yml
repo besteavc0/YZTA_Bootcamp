@@ -47,6 +47,7 @@ services:
         condition: service_healthy
     volumes:
       - ./apps/api/app:/app/app
+      - ./apps/api/tests:/app/tests
       - ./connectors:/app/connectors
       - ./workers:/app/workers
   worker:
@@ -62,6 +63,28 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    volumes:
+      - ./apps/api/app:/app/app
+      - ./connectors:/app/connectors
+      - ./workers:/app/workers
+
+  beat:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: erpilot_beat
+    restart: unless-stopped
+    command: ["celery", "-A", "workers.celery_app", "beat", "--loglevel=info"]
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./apps/api/app:/app/app
+      - ./connectors:/app/connectors
+      - ./workers:/app/workers
 
   web:
     build:
