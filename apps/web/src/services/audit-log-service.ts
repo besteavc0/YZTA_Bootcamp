@@ -1,14 +1,17 @@
+import { apiFetch } from "@/lib/api";
+
 export type AuditActionType =
   | "login"
   | "chat_query"
   | "excel_upload"
+  | "excel_compare"
   | "erp_sync"
   | "erp_config_change"
   | "user_role_change";
 
 export type AuditActionFilter = AuditActionType | "all";
 
-export type AuditLogStatus = "success" | "denied" | "error";
+export type AuditLogStatus = "success" | "denied" | "error" | "failed";
 
 export type AuditStatusFilter = AuditLogStatus | "all";
 
@@ -17,16 +20,16 @@ export type AuditLog = {
   userEmail: string;
   action: AuditActionType;
   resourceType: string;
-  resourceId: string | null;
+  resourceId: string;
+  details: Record<string, unknown>;
   ipAddress: string;
   status: AuditLogStatus;
-  details: Record<string, unknown>;
   createdAt: string;
 };
 
 export type GetAuditLogsParams = {
-  action?: AuditActionFilter;
-  status?: AuditStatusFilter;
+  action: AuditActionFilter;
+  status: AuditStatusFilter;
   startDate?: string;
   endDate?: string;
   limit?: number;
@@ -41,6 +44,18 @@ export type GetAuditLogsResponse = {
   offset: number;
 };
 
+type BackendAuditLog = {
+  id: string;
+  user_email: string | null;
+  action: string;
+  resource_type: string | null;
+  resource_id: string | null;
+  details: Record<string, unknown> | null;
+  ip_address: string | null;
+  status: string;
+  created_at: string;
+};
+
 const useMockAuditLogs =
   process.env.NEXT_PUBLIC_USE_MOCK_AUDIT_LOGS !== "false";
 
@@ -50,7 +65,7 @@ const mockAuditLogs: AuditLog[] = [
     userEmail: "admin@demo.com",
     action: "login",
     resourceType: "auth",
-    resourceId: null,
+    resourceId: "-",
     ipAddress: "192.168.1.12",
     status: "success",
     details: {
@@ -80,7 +95,7 @@ const mockAuditLogs: AuditLog[] = [
     userEmail: "viewer@demo.com",
     action: "chat_query",
     resourceType: "chat_messages",
-    resourceId: null,
+    resourceId: "-",
     ipAddress: "192.168.1.21",
     status: "denied",
     details: {
@@ -195,24 +210,67 @@ function isInDateRange(log: AuditLog, startDate?: string, endDate?: string) {
   return true;
 }
 
+function normalizeAuditAction(action: string): AuditActionType {
+  if (
+    action === "login" ||
+    action === "chat_query" ||
+    action === "excel_upload" ||
+    action === "excel_compare" ||
+    action === "erp_sync" ||
+    action === "erp_config_change" ||
+    action === "user_role_change"
+  ) {
+    return action;
+  }
+
+  return "erp_sync";
+}
+
+function normalizeAuditStatus(status: string): AuditLogStatus {
+  if (
+    status === "success" ||
+    status === "denied" ||
+    status === "error" ||
+    status === "failed"
+  ) {
+    return status;
+  }
+
+  return "error";
+}
+
+function mapBackendAuditLog(log: BackendAuditLog): AuditLog {
+  return {
+    id: log.id,
+    userEmail: log.user_email ?? "-",
+    action: normalizeAuditAction(log.action),
+    resourceType: log.resource_type ?? "-",
+    resourceId: log.resource_id ?? "-",
+    details: log.details ?? {},
+    ipAddress: log.ip_address ?? "-",
+    status: normalizeAuditStatus(log.status),
+    createdAt: log.created_at,
+  };
+}
+
 export async function getAuditLogs({
-  action = "all",
-  status = "all",
+  action,
+  status,
   startDate,
   endDate,
-  limit = 50,
+  limit = 20,
   offset = 0,
   token,
-}: GetAuditLogsParams = {}): Promise<GetAuditLogsResponse> {
+}: GetAuditLogsParams): Promise<GetAuditLogsResponse> {
   if (useMockAuditLogs) {
-    await new Promise((resolve) => setTimeout(resolve, 600));
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
     const filteredLogs = mockAuditLogs.filter((log) => {
       const matchesAction = action === "all" || log.action === action;
       const matchesStatus = status === "all" || log.status === status;
-      const matchesDate = isInDateRange(log, startDate, endDate);
+      const matchesDateRange = isInDateRange(log, startDate, endDate);
 
-      return matchesAction && matchesStatus && matchesDate;
+      return matchesAction && matchesStatus && matchesDateRange;
     });
 
     return {
@@ -225,36 +283,31 @@ export async function getAuditLogs({
 
   const searchParams = new URLSearchParams();
 
-  if (action !== "all") {
+  if (action && action !== "all") {
     searchParams.set("action", action);
   }
 
-  if (status !== "all") {
+  if (status && status !== "all") {
     searchParams.set("status", status);
-  }
-
-  if (startDate) {
-    searchParams.set("start_date", startDate);
-  }
-
-  if (endDate) {
-    searchParams.set("end_date", endDate);
   }
 
   searchParams.set("limit", String(limit));
   searchParams.set("offset", String(offset));
 
-  const response = await fetch(`/api/v1/audit/logs?${searchParams.toString()}`, {
-    headers: token
-      ? {
-          Authorization: `Bearer ${token}`,
-        }
-      : undefined,
-  });
+  const response = await apiFetch<BackendAuditLog[]>(
+    `/api/v1/audit/logs?${searchParams.toString()}`,
+    {
+      token,
+      method: "GET",
+    }
+  );
 
-  if (!response.ok) {
-    throw new Error("Audit log kayıtları alınamadı.");
-  }
+  const mappedItems = response.map(mapBackendAuditLog);
 
-  return response.json();
+  return {
+    items: mappedItems,
+    totalCount: mappedItems.length,
+    limit,
+    offset,
+  };
 }

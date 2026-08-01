@@ -7,16 +7,27 @@ export type SendChatMessageResponse = {
   sources?: SourceInfo[];
 };
 
+type ChatHistoryApiItem = {
+  id: string;
+  role: ChatMessage["role"];
+  content: string;
+  sql_query?: string | null;
+  sources?: SourceInfo[] | string | null;
+  created_at?: string;
+};
+
 type ChatApiResponse = {
   answer: string;
   sql_query?: string | null;
   sources?: SourceInfo[];
-  created_at?: string;
+  created_at: string;
 };
 
 type ChatHistoryApiResponse = {
-  items: ChatMessage[];
+  items: ChatHistoryApiItem[];
 };
+
+
 
 const useMockChat = process.env.NEXT_PUBLIC_USE_MOCK_CHAT !== "false";
 
@@ -46,7 +57,7 @@ export async function getChatHistory(
     }
   );
 
-  return response.items;
+  return response.items.map(mapChatHistoryItem).reverse();
 }
 
 export async function sendChatMessage(
@@ -160,11 +171,73 @@ export async function getChatHistoryPairs(
     };
   }
 
-  return apiFetch<{
-    items: ChatHistoryPair[];
-    hasMore: boolean;
-  }>(`/api/v1/chat/history?offset=${offset}&limit=${limit}`, {
+  const response = await apiFetch<ChatHistoryApiResponse>(
+  `/api/v1/chat/history?offset=${offset}&limit=${limit}`,
+  {
     token,
     method: "GET",
-  });
+  }
+);
+
+const messages = response.items.map(mapChatHistoryItem).reverse();
+
+return {
+  items: mapMessagesToHistoryPairs(messages),
+  hasMore: response.items.length === limit,
+};
 }
+
+function normalizeSources(value: SourceInfo[] | string | null | undefined): SourceInfo[] {
+  if (Array.isArray(value)) {
+    return value;
+  }
+
+  if (typeof value === "string" && value.trim().length > 0) {
+    try {
+      const parsedValue = JSON.parse(value);
+
+      return Array.isArray(parsedValue) ? parsedValue : [];
+    } catch {
+      return [];
+    }
+  }
+
+  return [];
+}
+
+function mapChatHistoryItem(item: ChatHistoryApiItem): ChatMessage {
+  return {
+    id: item.id,
+    role: item.role,
+    content: item.content,
+    sqlQuery: item.sql_query ?? null,
+    sources: normalizeSources(item.sources),
+    createdAt: item.created_at ?? new Date().toISOString(),
+  };
+}
+
+function mapMessagesToHistoryPairs(messages: ChatMessage[]): ChatHistoryPair[] {
+  const pairs: ChatHistoryPair[] = [];
+
+  for (let index = 0; index < messages.length; index += 1) {
+    const currentMessage = messages[index];
+    const nextMessage = messages[index + 1];
+
+    if (
+      currentMessage.role === "user" &&
+      nextMessage?.role === "assistant"
+    ) {
+      pairs.push({
+        id: `${currentMessage.id}-${nextMessage.id}`,
+        question: currentMessage.content,
+        answer: nextMessage.content,
+        sqlQuery: nextMessage.sqlQuery ?? null,
+        sources: nextMessage.sources ?? [],
+        createdAt: nextMessage.createdAt,
+      });
+    }
+  }
+
+  return pairs;
+}
+

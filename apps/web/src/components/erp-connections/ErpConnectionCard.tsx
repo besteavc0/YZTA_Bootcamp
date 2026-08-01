@@ -7,11 +7,15 @@ import type { ErpConnection } from "@/services/erp-connection-service";
 import { ErpConnectionStatusBadge } from "./ErpConnectionStatusBadge";
 import { ErpProviderBadge } from "./ErpProviderBadge";
 
+import { RefreshCw } from "lucide-react";
+
 type ErpConnectionCardProps = {
   connection: ErpConnection;
   isTesting: boolean;
   onTestConnection: (connectionId: string) => void;
   onEditConnection: (connectionId: string) => void;
+  isSyncing?: boolean;
+  onSyncConnection?: (connectionId: string) => void;
 };
 
 function formatDateTime(value: string | null) {
@@ -30,6 +34,8 @@ export function ErpConnectionCard({
   isTesting,
   onTestConnection,
   onEditConnection,
+  isSyncing = false,
+  onSyncConnection,
 }: ErpConnectionCardProps) {
   return (
     <Card>
@@ -82,6 +88,17 @@ export function ErpConnectionCard({
     <PlugZap className="mr-2 h-4 w-4" />
     {isTesting ? "Test Ediliyor..." : "Bağlantıyı Test Et"}
   </Button>
+
+  <Button
+  type="button"
+  variant="outline"
+  size="sm"
+  disabled={isSyncing}
+  onClick={() => onSyncConnection?.(connection.id)}
+>
+  <RefreshCw className="mr-2 h-4 w-4" />
+  {isSyncing ? "Sync başlatılıyor..." : "Sync Başlat"}
+</Button>
 
   <Button
     type="button"

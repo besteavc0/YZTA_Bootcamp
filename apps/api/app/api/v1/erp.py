@@ -9,7 +9,8 @@ ONCE MUTLAKA TASK-020 ile entegre edilmeli.
 import json
 import uuid
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
+from app.security.audit import log_action
 from sqlalchemy import text
 
 from app.db.session import AsyncSessionLocal
@@ -19,6 +20,8 @@ from app.schemas.erp import (
     SyncRunResponse,
     SyncTriggerResponse,
 )
+from connectors.registry import get_connector
+from app.security.audit import log_action
 from connectors.registry import get_connector
 
 router = APIRouter(prefix="/erp", tags=["erp"])
@@ -82,28 +85,46 @@ async def create_connection(payload: ERPConnectionCreate):
 
 
 @router.post("/connections/{connection_id}/test")
-async def test_connection(connection_id: str):
+async def test_connection(connection_id: str, request: Request):
     async with AsyncSessionLocal() as session:
         result = await session.execute(
             text(
-                "SELECT connector_type, config_encrypted, tenant_id FROM erp_connections WHERE id = :id"
+                "SELECT connector_type, config_encrypted, tenant_id "
+                "FROM erp_connections WHERE id = :id"
             ),
             {"id": connection_id},
         )
         row = result.mappings().first()
-        if row is None:
-            raise HTTPException(status_code=404, detail="Baglanti bulunamadi")
 
-        config = json.loads(row["config_encrypted"])  # TODO(TASK-020): decrypt_config()
-        config["tenant_id"] = row["tenant_id"]
+        if not row:
+            raise HTTPException(status_code=404, detail="ERP connection not found")
+
+        config = json.loads(row["config_encrypted"])
+        config["tenant_id"] = str(row["tenant_id"])
 
         connector = get_connector(row["connector_type"], config)
         ok = connector.test_connection()
+
+        await log_action(
+            db=session,
+            user=None,
+            action="erp_config_change",
+            resource_type="erp_connections",
+            resource_id=connection_id,
+            details={
+                "operation": "test_connection",
+                "connector_type": row["connector_type"],
+            },
+            request=request,
+            status="success" if ok else "error",
+            tenant_id=str(row["tenant_id"]),
+        )
+
         return {"success": ok}
 
 
 @router.post("/connections/{connection_id}/sync", response_model=SyncTriggerResponse)
-async def trigger_sync(connection_id: str):
+async def trigger_sync(connection_id: str, request: Request):
     async with AsyncSessionLocal() as session:
         result = await session.execute(
             text("SELECT tenant_id FROM erp_connections WHERE id = :id"),
@@ -116,7 +137,21 @@ async def trigger_sync(connection_id: str):
     # Celery task'ini tetikle (worker sureci ayri calisir)
     from workers.tasks.sync_erp import sync_erp_connection
 
-    async_result = sync_erp_connection.delay(connection_id, row["tenant_id"])
+    async_result = sync_erp_connection.delay(connection_id, str(row["tenant_id"]))
+    await log_action(
+    db=session,
+    user=None,
+    action="erp_sync",
+    resource_type="erp_connections",
+    resource_id=connection_id,
+    details={
+        "operation": "trigger_sync",
+        "task_id": async_result.id,
+    },
+    request=request,
+    status="success",
+    tenant_id=str(row["tenant_id"]),
+)
     return SyncTriggerResponse(
         message="Sync kuyruga alindi", task_id=async_result.id
     )
