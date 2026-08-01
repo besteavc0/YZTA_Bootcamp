@@ -87,6 +87,7 @@ export function AuditLogFilters({
           <option value="success">Başarılı</option>
           <option value="denied">Reddedildi</option>
           <option value="error">Hata</option>
+          <option value="failed">Başarısız</option>
         </select>
 
         <input
