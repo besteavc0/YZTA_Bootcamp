@@ -15,6 +15,7 @@ celery_app = Celery(
     include=[
         "workers.tasks.sync_erp",
         "workers.tasks.run_anomalies",
+        "workers.tasks.generate_digest",
     ],
 )
 
@@ -26,10 +27,15 @@ celery_app.conf.update(
     enable_utc=True,
 )
 
-# TASK-023: anomali taramasi her saat basi calisir
 celery_app.conf.beat_schedule = {
+    # TASK-023: anomali taramasi her saat basi calisir
     "anomaly-scan-hourly": {
         "task": "workers.tasks.run_anomalies.run_anomaly_scan",
         "schedule": crontab(minute=0),
+    },
+    # TASK-029: gunluk ozet her sabah 07:00'de calisir
+    "generate-digest-morning": {
+        "task": "workers.tasks.generate_digest.generate_daily_digests",
+        "schedule": crontab(hour=7, minute=0),
     },
 }
