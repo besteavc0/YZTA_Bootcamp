@@ -233,9 +233,11 @@ class ExcelCompareService:
           3) İki tarafı external_id üzerinden karşılaştır
           4) excel_diff_results tablosuna yaz
         """
+        tenant_uuid = tenant_id if isinstance(tenant_id, UUID) else UUID(str(tenant_id))
+
         upload = await self.db.get(ExcelUpload, upload_id)
-        if upload is None or upload.tenant_id != tenant_id:
-            raise ValueError(f"Upload bulunamadı: {upload_id}")
+        if upload is None or str(upload.tenant_id) != str(tenant_uuid):
+                raise ValueError(f"Upload bulunamadı: {upload_id}")
 
         entity_type = upload.entity_type
         column_mapping = upload.column_mapping or {}
@@ -251,7 +253,7 @@ class ExcelCompareService:
 
         # 1) Canonical tablodaki tüm tenant verisini çek
         result = await self.db.execute(
-            select(model).where(model.tenant_id == tenant_id)
+            select(model).where(model.tenant_id == tenant_uuid)
         )
         canonical_rows = list(result.scalars().all())
         canonical_by_id = {row.external_id: row for row in canonical_rows}
@@ -277,7 +279,7 @@ class ExcelCompareService:
         # only_in_excel: Excel'de var, canonical'da yok
         for ext_id in excel_ids - canonical_ids:
             diff = ExcelDiffResult(
-                tenant_id=tenant_id,
+                tenant_id=tenant_uuid,
                 upload_id=upload_id,
                 diff_type="only_in_excel",
                 external_id=ext_id,
@@ -291,7 +293,7 @@ class ExcelCompareService:
         for ext_id in canonical_ids - excel_ids:
             canonical_obj = canonical_by_id[ext_id]
             diff = ExcelDiffResult(
-                tenant_id=tenant_id,
+                tenant_id=tenant_uuid,
                 upload_id=upload_id,
                 diff_type="only_in_erp",
                 external_id=ext_id,
@@ -322,7 +324,7 @@ class ExcelCompareService:
 
             if is_mismatch:
                 diff = ExcelDiffResult(
-                    tenant_id=tenant_id,
+                    tenant_id=tenant_uuid,
                     upload_id=upload_id,
                     diff_type="mismatch",
                     external_id=ext_id,

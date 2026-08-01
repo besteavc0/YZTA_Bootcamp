@@ -9,19 +9,20 @@ verir — bu beklenen bir durumdur.
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
 from app.dependencies import get_current_user
 from app.models.excel import ExcelDiffResult, ExcelUpload
-from app.schemas.excel_full import (
+from app.schemas.excel import (
     CompareRequest,
     CompareResponse,
     DiffResultResponse,
     ExcelUploadResponse,
 )
 from app.security.auth import CurrentUser
+from app.security.audit import log_action
 from app.services.excel_compare_service import (
     ExcelCompareService,
     ExcelValidationError,
@@ -37,6 +38,7 @@ ALLOWED_EXTENSIONS = (".xlsx", ".xls", ".csv")
 
 @router.post("/upload", response_model=ExcelUploadResponse)
 async def upload_excel(
+    request: Request,
     file: UploadFile = File(...),
     entity_type: str = Form(...),
     db: AsyncSession = Depends(get_db),
@@ -79,6 +81,23 @@ async def upload_excel(
     await db.commit()
     await db.refresh(upload)
 
+    await log_action(
+    db=db,
+    user=current_user,
+    action="excel_upload",
+    resource_type="excel_uploads",
+    resource_id=str(upload.id),
+    details={
+        "filename": upload.filename,
+        "entity_type": upload.entity_type,
+        "row_count": upload.row_count,
+        "detected_columns": mapping_info["detected_columns"],
+        "column_mapping": mapping_info["column_mapping"],
+    },
+    request=request,
+    status="success",
+)
+
     return ExcelUploadResponse(
         upload_id=upload.id,
         filename=upload.filename,
@@ -91,7 +110,8 @@ async def upload_excel(
 
 @router.post("/compare", response_model=CompareResponse)
 async def compare_excel(
-    request: CompareRequest,
+    payload: CompareRequest,
+    request: Request,
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = Depends(get_current_user),
 ) -> CompareResponse:
@@ -100,7 +120,7 @@ async def compare_excel(
     """
     service = ExcelCompareService(db)
     try:
-        diffs = await service.compare(request.upload_id, current_user.tenant_id)
+        diffs = await service.compare(payload.upload_id, current_user.tenant_id)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
@@ -108,13 +128,31 @@ async def compare_excel(
     only_in_erp = sum(1 for d in diffs if d.diff_type == "only_in_erp")
     mismatch = sum(1 for d in diffs if d.diff_type == "mismatch")
 
+    await log_action(
+    db=db,
+    user=current_user,
+    action="excel_compare",
+    resource_type="excel_uploads",
+    resource_id=str(payload.upload_id),
+    details={
+        "upload_id": str(payload.upload_id),
+        "total_diffs": len(diffs),
+        "only_in_excel_count": only_in_excel,
+        "only_in_erp_count": only_in_erp,
+        "mismatch_count": mismatch,
+    },
+    request=request,
+    status="success",
+)
+
     return CompareResponse(
-        upload_id=request.upload_id,
+        upload_id=payload.upload_id,
         total_diffs=len(diffs),
         only_in_excel_count=only_in_excel,
         only_in_erp_count=only_in_erp,
         mismatch_count=mismatch,
-    )
+)
+    
 
 
 @router.get("/diffs/{upload_id}", response_model=list[DiffResultResponse])

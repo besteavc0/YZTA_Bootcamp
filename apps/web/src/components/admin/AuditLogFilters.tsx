@@ -71,6 +71,7 @@ export function AuditLogFilters({
           <option value="login">Login</option>
           <option value="chat_query">Chat Query</option>
           <option value="excel_upload">Excel Upload</option>
+          <option value="excel_compare">Excel Compare</option>
           <option value="erp_sync">ERP Sync</option>
           <option value="erp_config_change">ERP Config Change</option>
           <option value="user_role_change">User Role Change</option>

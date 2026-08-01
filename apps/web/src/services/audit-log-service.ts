@@ -4,6 +4,7 @@ export type AuditActionType =
   | "login"
   | "chat_query"
   | "excel_upload"
+  | "excel_compare"
   | "erp_sync"
   | "erp_config_change"
   | "user_role_change";
@@ -214,6 +215,7 @@ function normalizeAuditAction(action: string): AuditActionType {
     action === "login" ||
     action === "chat_query" ||
     action === "excel_upload" ||
+    action === "excel_compare" ||
     action === "erp_sync" ||
     action === "erp_config_change" ||
     action === "user_role_change"
