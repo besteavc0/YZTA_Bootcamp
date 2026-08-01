@@ -21,6 +21,8 @@ class Settings(BaseSettings):
     CLERK_SECRET_KEY: str = "sk_test_changeme"
     CLERK_JWKS_URL: str = "https://example.clerk.accounts.dev/.well-known/jwks.json"
 
+    FRONTEND_URL: str = "http://localhost:3000"
+
 
 @lru_cache
 def get_settings() -> Settings:
