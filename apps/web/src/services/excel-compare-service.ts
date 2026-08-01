@@ -61,7 +61,19 @@ type BackendDiffResult = {
 
 export type ExcelEntityType = "orders" | "customers" | "inventory";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+const RAW_API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+
+function normalizeApiUrl(value: string): string {
+  const trimmed = value.trim().replace(/\/+$/, "");
+
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+    return trimmed;
+  }
+
+  return `https://${trimmed}`;
+}
+
+const API_URL = normalizeApiUrl(RAW_API_URL);
 
 const useMockExcelCompare =
   process.env.NEXT_PUBLIC_USE_MOCK_EXCEL_COMPARE !== "false";
