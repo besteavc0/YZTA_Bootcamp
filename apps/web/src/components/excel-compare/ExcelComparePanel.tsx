@@ -1,19 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
+
 import { ExcelCompareFilters } from "./ExcelCompareFilters";
+import { ExcelCompareResultsTable } from "./ExcelCompareResultsTable";
+import { ExcelCompareSummaryCards } from "./ExcelCompareSummaryCards";
+import { ExcelUploadCard } from "./ExcelUploadCard";
 
 import {
   compareExcelFile,
   type ExcelCompareResponse,
   type ExcelCompareResult,
   type ExcelCompareStatusFilter,
+  type ExcelEntityType,
 } from "@/services/excel-compare-service";
-
-import { ExcelCompareResultsTable } from "./ExcelCompareResultsTable";
-import { ExcelCompareSummaryCards } from "./ExcelCompareSummaryCards";
-import { ExcelUploadCard } from "./ExcelUploadCard";
 
 function escapeCsvValue(value: string | number) {
   const stringValue = String(value);
@@ -67,6 +68,7 @@ export function ExcelComparePanel() {
   const { getToken } = useAuth();
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [entityType, setEntityType] = useState<ExcelEntityType>("orders");
   const [compareResult, setCompareResult] =
     useState<ExcelCompareResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -89,6 +91,7 @@ export function ExcelComparePanel() {
 
       const response = await compareExcelFile({
         file: selectedFile,
+        entityType,
         token,
       });
 
@@ -105,63 +108,77 @@ export function ExcelComparePanel() {
     }
   }
 
-  const filteredResults =
-  compareResult?.results.filter((result) => {
-    const normalizedSearchQuery = searchQuery.trim().toLowerCase();
+  const filteredResults = useMemo(() => {
+    return (
+      compareResult?.results.filter((result) => {
+        const normalizedSearchQuery = searchQuery.trim().toLowerCase();
 
-    const searchableText = [
-      result.rowNumber,
-      result.sourceRef,
-      result.fieldName,
-      result.excelValue,
-      result.erpValue,
-      result.status,
-      result.note,
-    ]
-      .join(" ")
-      .toLowerCase();
+        const searchableText = [
+          result.rowNumber,
+          result.sourceRef,
+          result.fieldName,
+          result.excelValue,
+          result.erpValue,
+          result.status,
+          result.note,
+        ]
+          .join(" ")
+          .toLowerCase();
 
-    const matchesSearch =
-      normalizedSearchQuery.length === 0 ||
-      searchableText.includes(normalizedSearchQuery);
+        const matchesSearch =
+          normalizedSearchQuery.length === 0 ||
+          searchableText.includes(normalizedSearchQuery);
 
-    const matchesStatus =
-      statusFilter === "all" || result.status === statusFilter;
+        const matchesStatus =
+          statusFilter === "all" || result.status === statusFilter;
 
-    const matchesOnlyIssues =
-      !onlyIssues || result.status === "different" || result.status === "missing";
+        const matchesOnlyIssues =
+          !onlyIssues ||
+          result.status === "different" ||
+          result.status === "missing";
 
-    return matchesSearch && matchesStatus && matchesOnlyIssues;
-  }) ?? [];
+        return matchesSearch && matchesStatus && matchesOnlyIssues;
+      }) ?? []
+    );
+  }, [compareResult, searchQuery, statusFilter, onlyIssues]);
 
-function handleExportCsv() {
-  if (!compareResult || filteredResults.length === 0) {
-    return;
-  }
-
-  const safeFileName = compareResult.fileName
-    .replace(/\.[^/.]+$/, "")
-    .replace(/\s+/g, "-")
-    .toLowerCase();
-
-  downloadCsv(filteredResults, `${safeFileName}-compare-results.csv`);
-}
-
-  return (
-    <div className="space-y-6">
-      <ExcelUploadCard
-  selectedFile={selectedFile}
-  isLoading={isLoading}
-  onFileChange={(file) => {
-    setSelectedFile(file);
+  function resetCompareState() {
     setCompareResult(null);
     setErrorMessage(null);
     setSearchQuery("");
     setStatusFilter("all");
     setOnlyIssues(false);
-  }}
-  onCompare={handleCompare}
-/>
+  }
+
+  function handleExportCsv() {
+    if (!compareResult || filteredResults.length === 0) {
+      return;
+    }
+
+    const safeFileName = compareResult.fileName
+      .replace(/\.[^/.]+$/, "")
+      .replace(/\s+/g, "-")
+      .toLowerCase();
+
+    downloadCsv(filteredResults, `${safeFileName}-compare-results.csv`);
+  }
+
+  return (
+    <div className="space-y-6">
+      <ExcelUploadCard
+        selectedFile={selectedFile}
+        entityType={entityType}
+        isLoading={isLoading}
+        onFileChange={(file) => {
+          setSelectedFile(file);
+          resetCompareState();
+        }}
+        onEntityTypeChange={(nextEntityType) => {
+          setEntityType(nextEntityType);
+          resetCompareState();
+        }}
+        onCompare={handleCompare}
+      />
 
       {errorMessage ? (
         <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
@@ -187,22 +204,22 @@ function handleExportCsv() {
 
           <ExcelCompareSummaryCards summary={compareResult.summary} />
 
-<ExcelCompareFilters
-  searchQuery={searchQuery}
-  statusFilter={statusFilter}
-  onlyIssues={onlyIssues}
-  resultCount={filteredResults.length}
-  totalCount={compareResult.results.length}
-  onSearchChange={setSearchQuery}
-  onStatusFilterChange={setStatusFilter}
-  onOnlyIssuesChange={setOnlyIssues}
-  onExportCsv={handleExportCsv}
-/>
+          <ExcelCompareFilters
+            searchQuery={searchQuery}
+            statusFilter={statusFilter}
+            onlyIssues={onlyIssues}
+            resultCount={filteredResults.length}
+            totalCount={compareResult.results.length}
+            onSearchChange={setSearchQuery}
+            onStatusFilterChange={setStatusFilter}
+            onOnlyIssuesChange={setOnlyIssues}
+            onExportCsv={handleExportCsv}
+          />
 
-<ExcelCompareResultsTable
-  results={filteredResults}
-  emptyMessage="Seçili filtrelere uygun karşılaştırma sonucu bulunamadı."
-/>
+          <ExcelCompareResultsTable
+            results={filteredResults}
+            emptyMessage="Seçili filtrelere uygun karşılaştırma sonucu bulunamadı."
+          />
         </>
       ) : (
         <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">

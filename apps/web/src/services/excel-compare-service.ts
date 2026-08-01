@@ -29,6 +29,7 @@ export type ExcelCompareResponse = {
 
 type CompareExcelParams = {
   file: File;
+  entityType: ExcelEntityType;
   token?: string | null;
 };
 
@@ -57,6 +58,8 @@ type BackendDiffResult = {
   erp_data: Record<string, unknown> | null;
   created_at: string;
 };
+
+export type ExcelEntityType = "orders" | "customers" | "inventory";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -203,11 +206,15 @@ function mapBackendDiffToResult(
   };
 }
 
-async function uploadExcelFile(file: File, token?: string | null) {
+async function uploadExcelFile(
+  file: File,
+  entityType: ExcelEntityType,
+  token?: string | null
+) {
   const formData = new FormData();
 
   formData.append("file", file);
-  formData.append("entity_type", "orders");
+  formData.append("entity_type", entityType);
 
   const response = await fetch(`${API_URL}/api/v1/excel/upload`, {
     method: "POST",
@@ -270,6 +277,7 @@ async function getExcelDiffs(uploadId: string, token?: string | null) {
 
 export async function compareExcelFile({
   file,
+  entityType,
   token,
 }: CompareExcelParams): Promise<ExcelCompareResponse> {
   if (useMockExcelCompare) {
@@ -283,11 +291,13 @@ export async function compareExcelFile({
     };
   }
 
-  const uploadResponse = await uploadExcelFile(file, token);
+  const uploadResponse = await uploadExcelFile(file, entityType, token);
+
   const compareResponse = await compareUploadedExcel(
     uploadResponse.upload_id,
     token
   );
+
   const diffResponse = await getExcelDiffs(uploadResponse.upload_id, token);
 
   return {

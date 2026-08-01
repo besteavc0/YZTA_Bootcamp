@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
+import { ReactQueryProvider } from "@/components/providers/ReactQueryProvider";
 
 export const metadata: Metadata = {
   title: "ERPilot",
@@ -15,7 +16,9 @@ export default function RootLayout({
   return (
     <ClerkProvider afterSignOutUrl="/login">
       <html lang="tr">
-        <body>{children}</body>
+        <body>
+  <ReactQueryProvider>{children}</ReactQueryProvider>
+</body>
       </html>
     </ClerkProvider>
   );

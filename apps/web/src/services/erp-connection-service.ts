@@ -40,6 +40,18 @@ export type UpdateErpConnectionPayload = {
   companyCode: string;
 };
 
+export type CreateErpConnectionPayload = {
+  tenantId: string;
+  name: string;
+  connectorType: ErpProvider;
+  config: Record<string, unknown>;
+};
+
+type CreateErpConnectionParams = {
+  payload: CreateErpConnectionPayload;
+  token?: string | null;
+};
+
 type GetErpConnectionsParams = {
   token?: string | null;
 };
@@ -358,6 +370,48 @@ export async function getErpSyncRuns({
   );
 
   return response.map(mapBackendSyncRun);
+}
+
+export async function createErpConnection({
+  payload,
+  token,
+}: CreateErpConnectionParams): Promise<ErpConnection> {
+  if (useMockErpConnections) {
+    await new Promise((resolve) => setTimeout(resolve, 600));
+
+    const newConnection: ErpConnection = {
+      id: `mock-erp-${Date.now()}`,
+      provider: payload.connectorType,
+      name: payload.name,
+      description: `${providerLabels[payload.connectorType]} bağlantısı`,
+      status: "disconnected",
+      host:
+        typeof payload.config.file_path === "string"
+          ? payload.config.file_path
+          : "-",
+      companyCode: payload.tenantId,
+      lastSyncAt: null,
+    };
+
+    mockConnections.unshift(newConnection);
+    return newConnection;
+  }
+
+  const response = await apiFetch<BackendErpConnection>(
+    "/api/v1/erp/connections",
+    {
+      token,
+      method: "POST",
+      body: JSON.stringify({
+        tenant_id: payload.tenantId,
+        name: payload.name,
+        connector_type: payload.connectorType,
+        config: payload.config,
+      }),
+    }
+  );
+
+  return mapBackendConnection(response);
 }
 
 export async function updateErpConnection({

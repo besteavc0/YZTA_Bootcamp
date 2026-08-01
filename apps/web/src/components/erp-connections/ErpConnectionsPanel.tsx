@@ -3,13 +3,16 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { ErpSyncHistoryPanel } from "./ErpSyncHistoryPanel";
+import { ErpConnectionCreateForm } from "./ErpConnectionCreateForm";
 
 import {
+  createErpConnection,
   getErpConnections,
   getErpSyncRuns,
   syncErpConnection,
   testErpConnection,
   updateErpConnection,
+  type CreateErpConnectionPayload,
   type ErpConnection,
   type ErpConnectionStatusFilter,
   type ErpProviderFilter,
@@ -59,6 +62,8 @@ const [isLoadingSyncRuns, setIsLoadingSyncRuns] = useState(false);
 const [syncHistoryErrorMessage, setSyncHistoryErrorMessage] = useState<
   string | null
 >(null);
+const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
+const [isCreating, setIsCreating] = useState(false);
 
 useEffect(() => {
   let isMounted = true;
@@ -234,6 +239,34 @@ async function handleSyncConnection(connectionId: string) {
     }
   }
 
+  async function handleCreateConnection(payload: CreateErpConnectionPayload) {
+  setIsCreating(true);
+  setSuccessMessage(null);
+  setErrorMessage(null);
+
+  try {
+    const token = await getToken();
+
+    const response = await createErpConnection({
+      payload,
+      token,
+    });
+
+    setConnections((currentConnections) => [response, ...currentConnections]);
+    setIsCreateFormOpen(false);
+    setSuccessMessage("Yeni ERP bağlantısı başarıyla oluşturuldu.");
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "ERP bağlantısı oluşturulurken beklenmeyen bir hata oluştu.";
+
+    setErrorMessage(message);
+  } finally {
+    setIsCreating(false);
+  }
+}
+
   const filteredConnections = connections.filter((connection) => {
     const normalizedSearchQuery = searchQuery.trim().toLowerCase();
 
@@ -264,6 +297,8 @@ async function handleSyncConnection(connectionId: string) {
   const editingConnection =
     connections.find((connection) => connection.id === editingConnectionId) ??
     null;
+
+    const defaultTenantId = connections[0]?.companyCode ?? "";
 
     const activeSyncConnectionId =
   selectedSyncConnectionId || connections[0]?.id || "";
@@ -300,6 +335,25 @@ async function handleSyncConnection(connectionId: string) {
       ) : null}
 
       <ErpConnectionSummaryCards connections={connections} />
+
+      <div className="flex justify-end">
+  <button
+    type="button"
+    onClick={() => setIsCreateFormOpen((currentValue) => !currentValue)}
+    className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+  >
+    {isCreateFormOpen ? "Formu Kapat" : "Yeni Bağlantı Ekle"}
+  </button>
+</div>
+
+{isCreateFormOpen ? (
+  <ErpConnectionCreateForm
+    defaultTenantId={defaultTenantId}
+    isSaving={isCreating}
+    onCancel={() => setIsCreateFormOpen(false)}
+    onSave={handleCreateConnection}
+  />
+) : null}
 
       <ErpConnectionFilters
         searchQuery={searchQuery}
