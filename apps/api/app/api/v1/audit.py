@@ -1,55 +1,73 @@
 """
-TASK-019 · GET /api/v1/audit/logs endpoint
+Audit log endpoint'leri.
 
-Not: `require_admin` ve `CurrentUser`, TASK-017/TASK-018'de (P1) kurulacak
-`app.security.auth` ve `app.dependencies` modüllerinden geliyor. O modüller
-main'e merge edilene kadar bu dosya import hatası verir — bu beklenen bir
-durumdur, TASK-017/018 tamamlanınca otomatik çalışır.
+Admin kullanıcılar kendi tenant'larına ait audit kayıtlarını action, status ve
+tarih aralığı filtreleriyle görüntüleyebilir.
 """
 
+from datetime import date as date_type
 from typing import Optional
-from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
-from app.dependencies import get_current_user, require_admin
+from app.dependencies import require_admin
 from app.models.audit_log import AuditLog
 from app.models.user import User
-from app.schemas.audit import AuditLogResponse
+from app.schemas.audit import AuditLogListResponse, AuditLogResponse
 from app.security.auth import CurrentUser
 
 router = APIRouter(prefix="/audit", tags=["audit"])
 
 
-@router.get("/logs", response_model=list[AuditLogResponse])
+@router.get("/logs", response_model=AuditLogListResponse)
 async def get_audit_logs(
     action: Optional[str] = Query(default=None, description="Filtrelenecek action tipi"),
-    limit: int = Query(default=50, le=200, description="Maksimum 200"),
+    status: Optional[str] = Query(default=None, description="Filtrelenecek log durumu"),
+    start_date: Optional[date_type] = Query(default=None, description="Başlangıç tarihi"),
+    end_date: Optional[date_type] = Query(default=None, description="Bitiş tarihi"),
+    limit: int = Query(default=50, ge=1, le=200, description="Maksimum 200"),
     offset: int = Query(default=0, ge=0),
     db: AsyncSession = Depends(get_db),
     current_user: CurrentUser = Depends(require_admin),
-) -> list[AuditLogResponse]:
+) -> AuditLogListResponse:
     """
-    Sadece admin erişebilir. Sadece kendi tenant'ının loglarını döndürür.
+    Sadece admin erişebilir. Sadece kullanıcının kendi tenant'ına ait logları döndürür.
     """
+    conditions = [AuditLog.tenant_id == current_user.tenant_id]
+
+    if action:
+        conditions.append(AuditLog.action == action)
+
+    if status:
+        conditions.append(AuditLog.status == status)
+
+    if start_date:
+        conditions.append(func.date(AuditLog.created_at) >= start_date)
+
+    if end_date:
+        conditions.append(func.date(AuditLog.created_at) <= end_date)
+
+    total_result = await db.execute(
+        select(func.count(AuditLog.id)).where(*conditions)
+    )
+    total_count = total_result.scalar_one()
+
     stmt = (
         select(AuditLog, User.email)
         .join(User, User.id == AuditLog.user_id, isouter=True)
-        .where(AuditLog.tenant_id == current_user.tenant_id)
+        .where(*conditions)
         .order_by(AuditLog.created_at.desc())
         .offset(offset)
         .limit(limit)
     )
-    if action:
-        stmt = stmt.where(AuditLog.action == action)
 
     result = await db.execute(stmt)
     rows = result.all()
 
-    return [
+    items = [
         AuditLogResponse(
             id=log.id,
             user_email=email,
@@ -63,3 +81,10 @@ async def get_audit_logs(
         )
         for log, email in rows
     ]
+
+    return AuditLogListResponse(
+        items=items,
+        total_count=total_count,
+        limit=limit,
+        offset=offset,
+    )

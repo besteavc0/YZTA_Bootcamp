@@ -56,6 +56,13 @@ type BackendAuditLog = {
   created_at: string;
 };
 
+type BackendAuditLogListResponse = {
+  items: BackendAuditLog[];
+  total_count: number;
+  limit: number;
+  offset: number;
+};
+
 const useMockAuditLogs =
   process.env.NEXT_PUBLIC_USE_MOCK_AUDIT_LOGS !== "false";
 
@@ -291,10 +298,18 @@ export async function getAuditLogs({
     searchParams.set("status", status);
   }
 
+  if (startDate) {
+    searchParams.set("start_date", startDate);
+  }
+
+  if (endDate) {
+    searchParams.set("end_date", endDate);
+  }
+
   searchParams.set("limit", String(limit));
   searchParams.set("offset", String(offset));
 
-  const response = await apiFetch<BackendAuditLog[]>(
+  const response = await apiFetch<BackendAuditLogListResponse>(
     `/api/v1/audit/logs?${searchParams.toString()}`,
     {
       token,
@@ -302,12 +317,12 @@ export async function getAuditLogs({
     }
   );
 
-  const mappedItems = response.map(mapBackendAuditLog);
+  const mappedItems = response.items.map(mapBackendAuditLog);
 
   return {
     items: mappedItems,
-    totalCount: mappedItems.length,
-    limit,
-    offset,
+    totalCount: response.total_count,
+    limit: response.limit,
+    offset: response.offset,
   };
 }

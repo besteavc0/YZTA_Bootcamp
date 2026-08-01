@@ -136,13 +136,33 @@ async def _fetch_metrics(tenant_id: UUID, target_date: date, db: AsyncSession) -
 
 
 async def build_digest_text(metrics: dict[str, Any]) -> str:
-    """Metrikleri LLM'e gonderip Turkce yonetici ozeti uretir."""
-    prompt_template = load_prompt("digest_summary")
-    system_prompt = prompt_template.format(
-        metrics=json.dumps(metrics, ensure_ascii=False, indent=2)
-    )
-    summary = await llm_client.complete(system_prompt, "Ozet metnini olustur.")
-    return summary.strip()
+    """Metrikleri LLM'e gönderip Türkçe yönetici özeti üretir.
+
+    LLM çağrısı başarısız olursa demo akışının kırılmaması için deterministik
+    fallback özet döner.
+    """
+    try:
+        prompt_template = load_prompt("digest_summary")
+        system_prompt = prompt_template.format(
+            metrics=json.dumps(metrics, ensure_ascii=False, indent=2)
+        )
+        summary = await llm_client.complete(system_prompt, "Özet metnini oluştur.")
+        return summary.strip()
+    except Exception as exc:
+        logger.warning("digest_llm_failed fallback_used error=%s", exc)
+
+        today_order_count = metrics.get("today_order_count", 0)
+        today_total_amount = metrics.get("today_total_amount", 0)
+        critical_stock_count = metrics.get("critical_stock_count", 0)
+        new_anomalies_count = metrics.get("new_anomalies_count", 0)
+
+        return (
+            f"Bugünkü ERP verilerine göre {today_order_count} sipariş işlendi ve "
+            f"toplam satış tutarı {today_total_amount:,.2f} TL oldu. "
+            f"Sistemde bugün {new_anomalies_count} yeni anomali tespit edildi. "
+            f"Kritik stok seviyesinin altında {critical_stock_count} ürün bulunuyor; "
+            "ilgili ekiplerin anomali ve stok panellerini kontrol etmesi önerilir."
+        )
 
 
 async def _upsert_digest(

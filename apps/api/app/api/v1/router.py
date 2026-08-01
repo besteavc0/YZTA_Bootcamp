@@ -9,6 +9,7 @@ from app.api.v1 import (
     erp,
     excel,
     health,
+    users,
 )
 
 api_router = APIRouter()
@@ -20,3 +21,4 @@ api_router.include_router(audit.router)
 api_router.include_router(excel.router)
 api_router.include_router(dashboard.router)
 api_router.include_router(anomalies.router)
+api_router.include_router(users.router)

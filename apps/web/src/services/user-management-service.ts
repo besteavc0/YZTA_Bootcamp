@@ -1,3 +1,5 @@
+import { apiFetch } from "@/lib/api";
+
 export type UserRole = "admin" | "user" | "viewer";
 
 export type UserStatus = "active" | "inactive";
@@ -10,6 +12,16 @@ export type ManagedUser = {
   status: UserStatus;
   lastLoginAt: string | null;
   createdAt: string;
+};
+
+type BackendManagedUser = {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  status: UserStatus;
+  last_login_at: string | null;
+  created_at: string;
 };
 
 type GetUsersParams = {
@@ -49,34 +61,19 @@ const mockUsers: ManagedUser[] = [
     lastLoginAt: "2026-07-23T16:45:00.000Z",
     createdAt: "2026-07-10T10:30:00.000Z",
   },
-  {
-    id: "user-003",
-    name: "Standart Kullanıcı",
-    email: "user@demo.com",
-    role: "user",
-    status: "active",
-    lastLoginAt: "2026-07-22T14:20:00.000Z",
-    createdAt: "2026-07-03T11:15:00.000Z",
-  },
-  {
-    id: "user-004",
-    name: "Viewer Kullanıcı",
-    email: "viewer@demo.com",
-    role: "viewer",
-    status: "active",
-    lastLoginAt: "2026-07-21T12:10:00.000Z",
-    createdAt: "2026-07-04T13:40:00.000Z",
-  },
-  {
-    id: "user-005",
-    name: "Pasif Kullanıcı",
-    email: "inactive@demo.com",
-    role: "user",
-    status: "inactive",
-    lastLoginAt: null,
-    createdAt: "2026-07-05T09:25:00.000Z",
-  },
 ];
+
+function mapBackendUser(user: BackendManagedUser): ManagedUser {
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    status: user.status,
+    lastLoginAt: user.last_login_at,
+    createdAt: user.created_at,
+  };
+}
 
 export async function getManagedUsers({
   token,
@@ -87,19 +84,12 @@ export async function getManagedUsers({
     return mockUsers;
   }
 
-  const response = await fetch("/api/v1/admin/users", {
-    headers: token
-      ? {
-          Authorization: `Bearer ${token}`,
-        }
-      : undefined,
+  const response = await apiFetch<BackendManagedUser[]>("/api/v1/users", {
+    token,
+    method: "GET",
   });
 
-  if (!response.ok) {
-    throw new Error("Kullanıcı listesi alınamadı.");
-  }
-
-  return response.json();
+  return response.map(mapBackendUser);
 }
 
 export async function updateUserRole({
@@ -122,24 +112,19 @@ export async function updateUserRole({
     };
   }
 
-  const response = await fetch(`/api/v1/admin/users/${userId}/role`, {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-      ...(token
-        ? {
-            Authorization: `Bearer ${token}`,
-          }
-        : {}),
-    },
-    body: JSON.stringify({ role }),
-  });
+  const response = await apiFetch<BackendManagedUser>(
+    `/api/v1/users/${userId}/role`,
+    {
+      token,
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ role }),
+    }
+  );
 
-  if (!response.ok) {
-    throw new Error("Kullanıcı rolü güncellenemedi.");
-  }
-
-  return response.json();
+  return mapBackendUser(response);
 }
 
 export async function updateUserStatus({
@@ -162,22 +147,17 @@ export async function updateUserStatus({
     };
   }
 
-  const response = await fetch(`/api/v1/admin/users/${userId}/status`, {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-      ...(token
-        ? {
-            Authorization: `Bearer ${token}`,
-          }
-        : {}),
-    },
-    body: JSON.stringify({ status }),
-  });
+  const response = await apiFetch<BackendManagedUser>(
+    `/api/v1/users/${userId}/status`,
+    {
+      token,
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ status }),
+    }
+  );
 
-  if (!response.ok) {
-    throw new Error("Kullanıcı durumu güncellenemedi.");
-  }
-
-  return response.json();
+  return mapBackendUser(response);
 }
