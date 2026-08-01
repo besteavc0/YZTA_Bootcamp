@@ -73,6 +73,21 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+  beat:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: erpilot_beat
+    restart: always
+    command: ["celery", "-A", "workers.celery_app", "beat", "--loglevel=info", "--schedule=/tmp/celerybeat-schedule"]
+    env_file: .env
+    environment:
+      ENVIRONMENT: production
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
   web:
     build:
