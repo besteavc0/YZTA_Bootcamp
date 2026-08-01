@@ -11,7 +11,15 @@ app = FastAPI(
     version="0.1.0",
 )
 
-allowed_origins = ["http://localhost:3000"]
+allowed_origins = {
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "https://erpilot.up.railway.app",
+}
+
+frontend_url = getattr(settings, "FRONTEND_URL", None)
+if frontend_url:
+    allowed_origins.add(frontend_url.rstrip("/"))
 
 if settings.FRONTEND_URL not in allowed_origins:
     allowed_origins.append(settings.FRONTEND_URL)
