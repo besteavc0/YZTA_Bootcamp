@@ -57,7 +57,7 @@ export async function getChatHistory(
     }
   );
 
-  return response.items.map(mapChatHistoryItem);
+  return response.items.map(mapChatHistoryItem).reverse();
 }
 
 export async function sendChatMessage(
@@ -179,7 +179,7 @@ export async function getChatHistoryPairs(
   }
 );
 
-const messages = response.items.map(mapChatHistoryItem);
+const messages = response.items.map(mapChatHistoryItem).reverse();
 
 return {
   items: mapMessagesToHistoryPairs(messages),

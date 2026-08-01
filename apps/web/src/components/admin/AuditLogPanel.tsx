@@ -59,14 +59,14 @@ async function fetchLogs() {
       const token = await getToken();
 
       const response = await getAuditLogs({
-        action: actionFilter,
-        status: statusFilter,
-        startDate: startDate || undefined,
-        endDate: endDate || undefined,
-        limit: PAGE_SIZE,
-        offset,
-        token,
-      });
+  action: actionFilter,
+  status: statusFilter,
+  startDate,
+  endDate,
+  limit: PAGE_SIZE,
+  offset,
+  token,
+});
 
       if (isMounted) {
         setLogs(response.items);

@@ -19,6 +19,7 @@ const rowClassMap: Record<AuditLogStatus, string> = {
   success: "bg-background",
   denied: "bg-red-50/60",
   error: "bg-yellow-50/60",
+  failed: "bg-red-50/60",
 };
 
 export function AuditLogTable({ logs, onRowClick }: AuditLogTableProps) {

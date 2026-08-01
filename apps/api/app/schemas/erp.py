@@ -2,6 +2,7 @@
 from datetime import datetime
 from typing import Any
 from pydantic import BaseModel
+from uuid import UUID
 
 
 class ERPConnectionCreate(BaseModel):
@@ -12,8 +13,8 @@ class ERPConnectionCreate(BaseModel):
 
 
 class ERPConnectionResponse(BaseModel):
-    id: str
-    tenant_id: str
+    id: UUID
+    tenant_id: UUID
     name: str
     connector_type: str
     is_active: bool
@@ -23,9 +24,9 @@ class ERPConnectionResponse(BaseModel):
 
 
 class SyncRunResponse(BaseModel):
-    id: str
-    tenant_id: str
-    erp_connection_id: str
+    id: UUID
+    tenant_id: UUID
+    erp_connection_id: UUID
     started_at: datetime
     finished_at: datetime | None = None
     rows_synced: int | None = None

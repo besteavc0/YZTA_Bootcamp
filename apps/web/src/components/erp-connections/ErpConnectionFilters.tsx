@@ -74,9 +74,13 @@ export function ErpConnectionFilters({
           className="h-10 rounded-md border bg-background px-3 text-sm outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
         >
           <option value="all">Tüm ERP&apos;ler</option>
-          <option value="sap">SAP</option>
-          <option value="logo">Logo</option>
-          <option value="mikro">Mikro</option>
+<option value="csv">CSV</option>
+<option value="sap">SAP</option>
+<option value="sap_b1">SAP B1</option>
+<option value="logo">Logo</option>
+<option value="mikro">Mikro</option>
+<option value="erpnext">ERPNext</option>
+<option value="dolibarr">Dolibarr</option>
         </select>
 
         <select

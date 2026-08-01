@@ -2,14 +2,18 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
+import { ErpSyncHistoryPanel } from "./ErpSyncHistoryPanel";
 
 import {
   getErpConnections,
+  getErpSyncRuns,
+  syncErpConnection,
   testErpConnection,
   updateErpConnection,
   type ErpConnection,
   type ErpConnectionStatusFilter,
   type ErpProviderFilter,
+  type ErpSyncRun,
   type TestErpConnectionResponse,
   type UpdateErpConnectionPayload,
 } from "@/services/erp-connection-service";
@@ -23,68 +27,110 @@ export function ErpConnectionsPanel() {
   const { getToken } = useAuth();
 
   const [connections, setConnections] = useState<ErpConnection[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [testingConnectionId, setTestingConnectionId] = useState<string | null>(
-    null
-  );
-  const [testResult, setTestResult] =
-    useState<TestErpConnectionResponse | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+const [isLoading, setIsLoading] = useState(true);
 
-  const [searchQuery, setSearchQuery] = useState("");
+const [testingConnectionId, setTestingConnectionId] = useState<string | null>(
+  null
+);
+const [syncingConnectionId, setSyncingConnectionId] = useState<string | null>(
+  null
+);
+
+const [testResult, setTestResult] =
+  useState<TestErpConnectionResponse | null>(null);
+const [successMessage, setSuccessMessage] = useState<string | null>(null);
+const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+const [searchQuery, setSearchQuery] = useState("");
 const [providerFilter, setProviderFilter] =
   useState<ErpProviderFilter>("all");
 const [statusFilter, setStatusFilter] =
   useState<ErpConnectionStatusFilter>("all");
 const [refreshKey, setRefreshKey] = useState(0);
+
 const [editingConnectionId, setEditingConnectionId] = useState<string | null>(
   null
 );
 const [isSaving, setIsSaving] = useState(false);
 
-  useEffect(() => {
-    let isMounted = true;
+const [selectedSyncConnectionId, setSelectedSyncConnectionId] = useState("");
+const [syncRuns, setSyncRuns] = useState<ErpSyncRun[]>([]);
+const [isLoadingSyncRuns, setIsLoadingSyncRuns] = useState(false);
+const [syncHistoryErrorMessage, setSyncHistoryErrorMessage] = useState<
+  string | null
+>(null);
 
-    async function fetchConnections() {
-      setIsLoading(true);
-      setErrorMessage(null);
+useEffect(() => {
+  let isMounted = true;
 
-      try {
-        const token = await getToken();
+  async function fetchConnections() {
+    setIsLoading(true);
+    setErrorMessage(null);
 
-        const response = await getErpConnections({
-          token,
-        });
+    try {
+      const token = await getToken();
 
-        if (isMounted) {
-          setConnections(response);
-        }
-      } catch (error) {
-        const message =
-          error instanceof Error
-            ? error.message
-            : "ERP bağlantıları yüklenirken beklenmeyen bir hata oluştu.";
+      const response = await getErpConnections({
+        token,
+      });
 
-        if (isMounted) {
-          setErrorMessage(message);
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
+      if (isMounted) {
+        setConnections(response);
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "ERP bağlantıları yüklenirken beklenmeyen bir hata oluştu.";
+
+      if (isMounted) {
+        setErrorMessage(message);
+      }
+    } finally {
+      if (isMounted) {
+        setIsLoading(false);
       }
     }
+  }
 
-    void fetchConnections();
+  void fetchConnections();
 
-    return () => {
-      isMounted = false;
-    };
-  }, [getToken, refreshKey]);
+  return () => {
+    isMounted = false;
+  };
+}, [getToken, refreshKey]);
+async function handleLoadSyncRuns(connectionId = activeSyncConnectionId) {
+  if (!connectionId) {
+    return;
+  }
+
+  setIsLoadingSyncRuns(true);
+  setSyncHistoryErrorMessage(null);
+
+  try {
+    const token = await getToken();
+
+    const response = await getErpSyncRuns({
+      connectionId,
+      token,
+    });
+
+    setSyncRuns(response);
+  } catch (error) {
+    setSyncHistoryErrorMessage(
+      error instanceof Error
+        ? error.message
+        : "Sync geçmişi yüklenirken bir hata oluştu."
+    );
+  } finally {
+    setIsLoadingSyncRuns(false);
+  }
+}
 
   async function handleTestConnection(connectionId: string) {
     setTestingConnectionId(connectionId);
     setTestResult(null);
+    setSuccessMessage(null);
     setErrorMessage(null);
 
     try {
@@ -123,72 +169,104 @@ const [isSaving, setIsSaving] = useState(false);
     }
   }
 
-  const filteredConnections = connections.filter((connection) => {
-  const normalizedSearchQuery = searchQuery.trim().toLowerCase();
-
-  const searchableText = [
-    connection.name,
-    connection.description,
-    connection.provider,
-    connection.status,
-    connection.host,
-    connection.companyCode,
-  ]
-    .join(" ")
-    .toLowerCase();
-
-  const matchesSearch =
-    normalizedSearchQuery.length === 0 ||
-    searchableText.includes(normalizedSearchQuery);
-
-  const matchesProvider =
-    providerFilter === "all" || connection.provider === providerFilter;
-
-  const matchesStatus =
-    statusFilter === "all" || connection.status === statusFilter;
-
-  return matchesSearch && matchesProvider && matchesStatus;
-});
-
-const editingConnection =
-  connections.find((connection) => connection.id === editingConnectionId) ??
-  null;
-
-async function handleSaveConnection(payload: UpdateErpConnectionPayload) {
-  if (!editingConnectionId) {
-    return;
-  }
-
-  setIsSaving(true);
-  setErrorMessage(null);
-
+async function handleSyncConnection(connectionId: string) {
   try {
+    setSyncingConnectionId(connectionId);
+    setErrorMessage(null);
+    setSuccessMessage(null);
+
     const token = await getToken();
 
-    const response = await updateErpConnection({
-      connectionId: editingConnectionId,
-      payload,
+    const response = await syncErpConnection({
+      connectionId,
       token,
     });
 
-    setConnections((currentConnections) =>
-      currentConnections.map((connection) =>
-        connection.id === response.id ? response : connection
-      )
-    );
+    setSuccessMessage(`${response.message} Task ID: ${response.taskId}`);
 
-    setEditingConnectionId(null);
+    setRefreshKey((currentValue) => currentValue + 1);
+    await handleLoadSyncRuns(connectionId);
   } catch (error) {
-    const message =
+    setErrorMessage(
       error instanceof Error
         ? error.message
-        : "ERP bağlantısı kaydedilirken beklenmeyen bir hata oluştu.";
-
-    setErrorMessage(message);
+        : "ERP sync işlemi başlatılırken bir hata oluştu."
+    );
   } finally {
-    setIsSaving(false);
+    setSyncingConnectionId(null);
   }
 }
+
+  async function handleSaveConnection(payload: UpdateErpConnectionPayload) {
+    if (!editingConnectionId) {
+      return;
+    }
+
+    setIsSaving(true);
+    setSuccessMessage(null);
+    setErrorMessage(null);
+
+    try {
+      const token = await getToken();
+
+      const response = await updateErpConnection({
+        connectionId: editingConnectionId,
+        payload,
+        token,
+      });
+
+      setConnections((currentConnections) =>
+        currentConnections.map((connection) =>
+          connection.id === response.id ? response : connection
+        )
+      );
+
+      setEditingConnectionId(null);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "ERP bağlantısı kaydedilirken beklenmeyen bir hata oluştu.";
+
+      setErrorMessage(message);
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  const filteredConnections = connections.filter((connection) => {
+    const normalizedSearchQuery = searchQuery.trim().toLowerCase();
+
+    const searchableText = [
+      connection.name,
+      connection.description,
+      connection.provider,
+      connection.status,
+      connection.host,
+      connection.companyCode,
+    ]
+      .join(" ")
+      .toLowerCase();
+
+    const matchesSearch =
+      normalizedSearchQuery.length === 0 ||
+      searchableText.includes(normalizedSearchQuery);
+
+    const matchesProvider =
+      providerFilter === "all" || connection.provider === providerFilter;
+
+    const matchesStatus =
+      statusFilter === "all" || connection.status === statusFilter;
+
+    return matchesSearch && matchesProvider && matchesStatus;
+  });
+
+  const editingConnection =
+    connections.find((connection) => connection.id === editingConnectionId) ??
+    null;
+
+    const activeSyncConnectionId =
+  selectedSyncConnectionId || connections[0]?.id || "";
 
   if (isLoading) {
     return (
@@ -208,6 +286,12 @@ async function handleSaveConnection(payload: UpdateErpConnectionPayload) {
         </div>
       ) : null}
 
+      {successMessage ? (
+        <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-700">
+          {successMessage}
+        </div>
+      ) : null}
+
       {testResult ? (
         <div className="rounded-lg border bg-muted/30 p-4 text-sm">
           <p className="font-medium">Bağlantı Test Sonucu</p>
@@ -217,46 +301,62 @@ async function handleSaveConnection(payload: UpdateErpConnectionPayload) {
 
       <ErpConnectionSummaryCards connections={connections} />
 
-<ErpConnectionFilters
-  searchQuery={searchQuery}
-  providerFilter={providerFilter}
-  statusFilter={statusFilter}
-  resultCount={filteredConnections.length}
-  totalCount={connections.length}
-  isRefreshing={isLoading}
-  onSearchChange={setSearchQuery}
-  onProviderFilterChange={setProviderFilter}
-  onStatusFilterChange={setStatusFilter}
-  onRefresh={() => setRefreshKey((currentValue) => currentValue + 1)}
-/>
+      <ErpConnectionFilters
+        searchQuery={searchQuery}
+        providerFilter={providerFilter}
+        statusFilter={statusFilter}
+        resultCount={filteredConnections.length}
+        totalCount={connections.length}
+        isRefreshing={isLoading}
+        onSearchChange={setSearchQuery}
+        onProviderFilterChange={setProviderFilter}
+        onStatusFilterChange={setStatusFilter}
+        onRefresh={() => setRefreshKey((currentValue) => currentValue + 1)}
+      />
 
-{editingConnection ? (
-  <ErpConnectionSettingsForm
-    key={editingConnection.id}
-    connection={editingConnection}
-    isSaving={isSaving}
-    onCancel={() => setEditingConnectionId(null)}
-    onSave={handleSaveConnection}
+      {editingConnection ? (
+        <ErpConnectionSettingsForm
+          key={editingConnection.id}
+          connection={editingConnection}
+          isSaving={isSaving}
+          onCancel={() => setEditingConnectionId(null)}
+          onSave={handleSaveConnection}
+        />
+      ) : null}
+
+      {filteredConnections.length > 0 ? (
+        <div className="grid gap-4">
+          {filteredConnections.map((connection) => (
+            <ErpConnectionCard
+  key={connection.id}
+  connection={connection}
+  isTesting={testingConnectionId === connection.id}
+  isSyncing={syncingConnectionId === connection.id}
+  onTestConnection={handleTestConnection}
+  onSyncConnection={handleSyncConnection}
+  onEditConnection={setEditingConnectionId}
+/>
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
+          Seçili filtrelere uygun ERP bağlantısı bulunamadı.
+        </div>
+      )}
+      {connections.length > 0 ? (
+  <ErpSyncHistoryPanel
+    connections={connections}
+    selectedConnectionId={activeSyncConnectionId}
+    syncRuns={syncRuns}
+    isLoading={isLoadingSyncRuns}
+    errorMessage={syncHistoryErrorMessage}
+    onConnectionChange={(connectionId) => {
+      setSelectedSyncConnectionId(connectionId);
+      void handleLoadSyncRuns(connectionId);
+    }}
+    onRefresh={() => void handleLoadSyncRuns(activeSyncConnectionId)}
   />
 ) : null}
-
-{filteredConnections.length > 0 ? (
-  <div className="grid gap-4">
-    {filteredConnections.map((connection) => (
-      <ErpConnectionCard
-        key={connection.id}
-        connection={connection}
-        isTesting={testingConnectionId === connection.id}
-        onTestConnection={handleTestConnection}
-        onEditConnection={setEditingConnectionId}
-      />
-    ))}
-  </div>
-) : (
-  <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
-    Seçili filtrelere uygun ERP bağlantısı bulunamadı.
-  </div>
-)}
     </div>
   );
 }

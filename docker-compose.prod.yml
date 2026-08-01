@@ -1,0 +1,111 @@
+# TASK-036 · Production Docker Compose
+#
+# Kullanım (Hetzner VPS üzerinde):
+#   docker compose -f docker-compose.prod.yml up -d
+#
+# Fark: development docker-compose.yml'e göre:
+#   - volumes ile canlı kod mount edilmiyor (imaj build edilip öyle çalışıyor)
+#   - ENVIRONMENT=production
+#   - postgres portu dışarı açılmıyor (sadece iç ağda erişilebilir)
+#   - restart policy: always (VPS reboot olursa otomatik ayağa kalksın)
+#   - nginx + certbot servisleri eklendi (HTTPS için)
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: erpilot_postgres
+    restart: always
+    env_file: .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./scripts/init_db.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    # NOT: production'da postgres portu (5432) dışarı açılmıyor,
+    # sadece docker network içinden erişilebilir - güvenlik için önemli.
+
+  redis:
+    image: redis:7-alpine
+    container_name: erpilot_redis
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: erpilot_api
+    restart: always
+    env_file: .env
+    environment:
+      ENVIRONMENT: production
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    # NOT: volume mount YOK - imaj build edilirken kod içine kopyalanıyor.
+    # Kod değişikliği = yeniden build gerekir (development'ın aksine).
+
+  worker:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: erpilot_worker
+    restart: always
+    command: ["celery", "-A", "workers.celery_app", "worker", "--loglevel=info"]
+    env_file: .env
+    environment:
+      ENVIRONMENT: production
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ./apps/web
+    container_name: erpilot_web
+    restart: always
+    depends_on:
+      - api
+
+  nginx:
+    image: nginx:alpine
+    container_name: erpilot_nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./deploy/certbot/conf:/etc/letsencrypt:ro
+      - ./deploy/certbot/www:/var/www/certbot:ro
+    depends_on:
+      - api
+      - web
+
+  certbot:
+    image: certbot/certbot
+    container_name: erpilot_certbot
+    volumes:
+      - ./deploy/certbot/conf:/etc/letsencrypt
+      - ./deploy/certbot/www:/var/www/certbot
+    # İlk sertifika alma komutu (deploy sırasında elle çalıştırılır):
+    #   docker compose -f docker-compose.prod.yml run --rm certbot certonly
+    #     --webroot -w /var/www/certbot -d your-domain.com
+
+volumes:
+  pgdata:
