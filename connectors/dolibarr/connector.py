@@ -13,10 +13,10 @@ logger = logging.getLogger("erpilot.connectors.dolibarr")
 # Dolibarr sipariş statü kodu -> canonical status
 # (0=taslak,1=onaylandı,2=işleniyor,3=teslim edildi,-1=iptal)
 _ORDER_STATUS_MAP = {
-    "0": "pending",
-    "1": "pending",
-    "2": "pending",
-    "3": "completed",
+    "0": "draft",
+    "1": "confirmed",
+    "2": "delivered",
+    "3": "invoiced",
     "-1": "cancelled",
 }
 
@@ -147,19 +147,31 @@ class DolibarrConnector(ERPConnector):
                 )
             rows_synced += len(raw_products)
 
-            raw_orders = self._get("orders")
+            raw_orders = self._get("orders", {"sortfield": "t.rowid", "sortorder": "ASC"})
             for o in raw_orders:
-                statut = str(o.get("statut", o.get("status", "")))
-                self.orders.append(
-                    {
-                        "external_id": str(o.get("ref") or o.get("id")),
-                        "source": self.SOURCE,
-                        "customer_external_id": str(o.get("socid")) if o.get("socid") else None,
-                        "order_date": self._parse_date(o.get("date") or o.get("date_commande")),
-                        "total_amount": float(o.get("total_ttc") or 0),
-                        "status": _ORDER_STATUS_MAP.get(statut, "pending"),
-                    }
-                )
+                try:
+                    statut = str(o.get("statut", o.get("status", "")))
+                    
+                    # Tutarı güvenli floata çevir
+                    val_ttc = o.get("total_ttc") or 0
+                    try:
+                        total_amount = float(val_ttc)
+                    except (ValueError, TypeError):
+                        total_amount = 0.0
+
+                    self.orders.append(
+                        {
+                            "external_id": str(o.get("ref") or o.get("id")),
+                            "source": self.SOURCE,
+                            "customer_external_id": str(o.get("socid")) if o.get("socid") else None,
+                            "order_date": self._parse_date(o.get("date") or o.get("date_commande")),
+                            "total_amount": total_amount,
+                            "status": _ORDER_STATUS_MAP.get(statut, "pending"),
+                        }
+                    )
+                except Exception as err:
+                    logger.warning("order_parse_error err=%s order_id=%s", err, o.get("id"))
+
             rows_synced += len(raw_orders)
 
             logger.info(

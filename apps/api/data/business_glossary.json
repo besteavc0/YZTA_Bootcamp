@@ -1,0 +1,86 @@
+[
+  {
+    "table_name": "canonical_orders",
+    "column_name": "total_amount",
+    "turkish_label": "siparis tutari",
+    "description": "Bir siparisin toplam tutari, Turk Lirasi cinsinden",
+    "aliases": ["satis", "tutar", "ciro", "gelir", "satis tutari", "para"]
+  },
+  {
+    "table_name": "canonical_orders",
+    "column_name": "order_date",
+    "turkish_label": "siparis tarihi",
+    "description": "Siparisin verildigi tarih ve saat",
+    "aliases": ["tarih", "ne zaman", "gun", "saat"]
+  },
+  {
+    "table_name": "canonical_orders",
+    "column_name": "status",
+    "turkish_label": "siparis durumu",
+    "description": "Siparisin durumu: completed, pending, cancelled, returned",
+    "aliases": ["durum", "statu", "tamamlandi mi", "iptal mi"]
+  },
+  {
+    "table_name": "canonical_orders",
+    "column_name": "customer_external_id",
+    "turkish_label": "musteri",
+    "description": "Siparisi veren musterinin kimligi",
+    "aliases": ["musteri", "alici", "kim siparis verdi"]
+  },
+  {
+    "table_name": "canonical_customers",
+    "column_name": "name",
+    "turkish_label": "musteri adi",
+    "description": "Musterinin veya sirketin adi",
+    "aliases": ["isim", "firma adi", "sirket"]
+  },
+  {
+    "table_name": "canonical_customers",
+    "column_name": "city",
+    "turkish_label": "sehir",
+    "description": "Musterinin bulundugu sehir",
+    "aliases": ["il", "lokasyon", "nerede"]
+  },
+  {
+    "table_name": "canonical_customers",
+    "column_name": "segment",
+    "turkish_label": "musteri segmenti",
+    "description": "Musteri tipi: Kurumsal, Bireysel, KOBI",
+    "aliases": ["segment", "musteri tipi", "kurumsal mi bireysel mi"]
+  },
+  {
+    "table_name": "canonical_inventory",
+    "column_name": "quantity",
+    "turkish_label": "stok miktari",
+    "description": "Bir urunun depodaki mevcut miktari",
+    "aliases": ["stok", "adet", "miktar", "envanter", "kac tane var"]
+  },
+  {
+    "table_name": "canonical_inventory",
+    "column_name": "reorder_level",
+    "turkish_label": "kritik stok seviyesi",
+    "description": "Bu seviyenin altina dusen urunler yeniden siparis edilmeli",
+    "aliases": ["minimum stok", "kritik seviye", "yeniden siparis noktasi"]
+  },
+  {
+    "table_name": "canonical_inventory",
+    "column_name": "warehouse",
+    "turkish_label": "depo",
+    "description": "Urunun bulundugu depo lokasyonu",
+    "aliases": ["ambar", "lokasyon", "hangi depoda"]
+  },
+  {
+    "table_name": "canonical_inventory",
+    "column_name": "product_name",
+    "turkish_label": "urun adi",
+    "description": "Urunun adi",
+    "aliases": ["urun", "mal", "malzeme"]
+  },
+  {
+    "table_name": "anomaly_findings",
+    "column_name": "severity",
+    "turkish_label": "onem derecesi",
+    "description": "Anomalinin ciddiyet seviyesi: low, medium, high",
+    "aliases": ["ciddiyet", "oncelik", "onem"]
+  }
+]

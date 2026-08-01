@@ -23,7 +23,7 @@ client = TestClient(app)
 import psycopg2  # noqa: E402
 
 _conn = psycopg2.connect(
-    os.environ.get("PG_TEST_DSN", "postgresql://erpilot:erpilot@localhost:5432/erpilot")
+    os.environ.get("PG_TEST_DSN", "postgresql://erpilot:erpilot@postgres:5432/erpilot")
 )
 _cur = _conn.cursor()
 _cur.execute("SELECT id FROM tenants ORDER BY created_at LIMIT 1")
