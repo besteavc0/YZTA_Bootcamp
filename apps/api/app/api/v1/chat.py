@@ -118,3 +118,48 @@ async def chat_history(
         for r in rows
     ]
     return {"items": items, "limit": limit, "offset": offset}
+
+@router.delete("/chat/history")
+async def clear_chat_history(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    result = await db.execute(
+        text(
+            """
+            DELETE FROM chat_messages
+            WHERE tenant_id = :tenant_id
+              AND user_id = :user_id
+            RETURNING id
+            """
+        ),
+        {
+            "tenant_id": str(current_user.tenant_id),
+            "user_id": str(current_user.user_id),
+        },
+    )
+
+    deleted_rows = result.fetchall()
+    deleted_count = len(deleted_rows)
+
+    await log_action(
+        db=db,
+        user=current_user,
+        action="chat_history_clear",
+        resource_type="chat_messages",
+        resource_id=str(current_user.user_id),
+        details={
+            "deleted_count": deleted_count,
+        },
+        request=request,
+        status="success",
+        tenant_id=str(current_user.tenant_id),
+    )
+
+    await db.commit()
+
+    return {
+        "success": True,
+        "deleted_count": deleted_count,
+    }

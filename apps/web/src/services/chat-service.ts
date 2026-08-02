@@ -241,3 +241,14 @@ function mapMessagesToHistoryPairs(messages: ChatMessage[]): ChatHistoryPair[] {
   return pairs;
 }
 
+type ClearChatHistoryResponse = {
+  success: boolean;
+  deleted_count: number;
+};
+
+export async function clearChatHistory(token?: string | null) {
+  return apiFetch<ClearChatHistoryResponse>("/api/v1/chat/history", {
+    method: "DELETE",
+    token,
+  });
+}

@@ -2,12 +2,16 @@
 
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
-import { SendHorizontal } from "lucide-react";
+import { SendHorizontal, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { ChatMessage } from "@/types";
-import { getChatHistory, sendChatMessage } from "@/services/chat-service";
+import {
+  clearChatHistory,
+  getChatHistory,
+  sendChatMessage,
+} from "@/services/chat-service";
 
 import { MessageBubble } from "./MessageBubble";
 import { SuggestedQuestions } from "./SuggestedQuestions";
@@ -31,50 +35,115 @@ export function ChatWindow() {
   const [question, setQuestion] = useState("");
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [isSending, setIsSending] = useState(false);
+  const [isClearingHistory, setIsClearingHistory] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
+    let isMounted = true;
+
     async function loadHistory() {
+      if (!isLoaded) {
+        return;
+      }
+
+      if (!isSignedIn) {
+        setIsLoadingHistory(false);
+        return;
+      }
+
       try {
         setIsLoadingHistory(true);
         setErrorMessage(null);
 
         const token = await getToken();
+
+        if (!token) {
+          throw new Error("Token alınamadı.");
+        }
+
         const history = await getChatHistory(token);
 
-        setMessages(history);
+        if (isMounted) {
+          setMessages(history);
+        }
       } catch {
-        setErrorMessage("Sohbet geçmişi yüklenirken bir hata oluştu.");
+        if (isMounted) {
+          setErrorMessage("Sohbet geçmişi yüklenirken bir hata oluştu.");
+        }
       } finally {
-        setIsLoadingHistory(false);
+        if (isMounted) {
+          setIsLoadingHistory(false);
+        }
       }
     }
 
     void loadHistory();
-  }, [getToken]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [getToken, isLoaded, isSignedIn]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isSending]);
 
+  async function handleClearChatHistory() {
+    if (messages.length === 0) {
+      return;
+    }
+
+    const shouldClear = window.confirm(
+      "Sohbet geçmişinizi temizlemek istediğinizden emin misiniz?"
+    );
+
+    if (!shouldClear) {
+      return;
+    }
+
+    setIsClearingHistory(true);
+    setErrorMessage(null);
+
+    try {
+      const token = await getToken();
+
+      if (!token) {
+        throw new Error("Token alınamadı.");
+      }
+
+      await clearChatHistory(token);
+
+      setMessages([]);
+      setQuestion("");
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Sohbet geçmişi temizlenirken bir hata oluştu."
+      );
+    } finally {
+      setIsClearingHistory(false);
+    }
+  }
+
   async function sendQuestion(questionText: string) {
-
     if (!isLoaded || !isSignedIn) {
-  setErrorMessage("Mesaj göndermek için giriş yapmalısın.");
-  return;
-}
+      setErrorMessage("Mesaj göndermek için giriş yapmalısın.");
+      return;
+    }
 
-const token = await getToken();
-
-if (!token) {
-  setErrorMessage("Oturum bilgisi alınamadı. Lütfen tekrar giriş yap.");
-  return;
-}
     const trimmedQuestion = questionText.trim();
 
     if (!trimmedQuestion || isSending || isLoadingHistory) {
+      return;
+    }
+
+    const token = await getToken();
+
+    if (!token) {
+      setErrorMessage("Oturum bilgisi alınamadı. Lütfen tekrar giriş yap.");
       return;
     }
 
@@ -91,11 +160,10 @@ if (!token) {
     setErrorMessage(null);
 
     try {
-      const token = await getToken();
       const response = await sendChatMessage(trimmedQuestion, token);
 
       const assistantMessage: ChatMessage = {
-        id: createMessageId("user"),
+        id: createMessageId("assistant"),
         role: "assistant",
         content: response.answer,
         sqlQuery: response.sqlQuery,
@@ -103,7 +171,10 @@ if (!token) {
         createdAt: new Date().toISOString(),
       };
 
-      setMessages((currentMessages) => [...currentMessages, assistantMessage]);
+      setMessages((currentMessages) => [
+        ...currentMessages,
+        assistantMessage,
+      ]);
     } catch {
       setErrorMessage("Bir hata oluştu, lütfen tekrar deneyin.");
     } finally {
@@ -118,11 +189,29 @@ if (!token) {
 
   return (
     <div className="flex h-[calc(100vh-8rem)] flex-col rounded-xl border bg-background">
-      <div className="border-b px-6 py-4">
-        <h2 className="text-lg font-semibold">ERPilot AI Asistan</h2>
-        <p className="text-sm text-muted-foreground">
-          ERP verilerin hakkında Türkçe soru sor.
-        </p>
+      <div className="flex items-start justify-between gap-4 border-b px-6 py-4">
+        <div>
+          <h2 className="text-lg font-semibold">ERPilot AI Asistan</h2>
+          <p className="text-sm text-muted-foreground">
+            ERP verilerin hakkında Türkçe soru sor.
+          </p>
+        </div>
+
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={
+            isLoadingHistory ||
+            isSending ||
+            isClearingHistory ||
+            messages.length === 0
+          }
+          onClick={handleClearChatHistory}
+        >
+          <Trash2 className="mr-2 h-4 w-4" />
+          {isClearingHistory ? "Temizleniyor..." : "Sohbeti Temizle"}
+        </Button>
       </div>
 
       <div className="flex-1 space-y-6 overflow-y-auto p-6">
@@ -136,7 +225,7 @@ if (!token) {
           ))
         )}
 
-        {!isLoadingHistory && messages.length <= 1 && (
+        {!isLoadingHistory && messages.length === 0 && (
           <SuggestedQuestions
             disabled={isSending}
             onSelectQuestion={(selectedQuestion) => {
@@ -161,12 +250,17 @@ if (!token) {
           value={question}
           onChange={(event) => setQuestion(event.target.value)}
           placeholder="Örn: Bu ay toplam satış tutarı ne kadar?"
-          disabled={isSending || isLoadingHistory}
+          disabled={isSending || isLoadingHistory || isClearingHistory}
         />
 
         <Button
           type="submit"
-          disabled={isSending || isLoadingHistory || !question.trim()}
+          disabled={
+            isSending ||
+            isLoadingHistory ||
+            isClearingHistory ||
+            !question.trim()
+          }
         >
           <SendHorizontal className="mr-2 h-4 w-4" />
           Gönder
