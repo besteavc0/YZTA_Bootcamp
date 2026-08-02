@@ -1,7 +1,3 @@
-Sürüm Notları (RELEASE_NOTES.md)
-
-ERPilot — MVP Sürümü · Sprint 3 Sonu (TASK-040)
-
 Sürüm Özeti
 
 ERPilot MVP'si; doğal dilde (Türkçe) ERP sorgulama, güvenli Text-to-SQL pipeline, rol bazlı erişim, ERP connector mimarisi (Dolibarr/CSV), anomali tespiti, Excel karşılaştırma ve günlük özet modüllerini içerir.
