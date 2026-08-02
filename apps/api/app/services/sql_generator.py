@@ -25,6 +25,39 @@ SQL: SELECT SUM(total_amount) AS toplam_satis FROM canonical_orders WHERE tenant
 
 Soru: Kritik stok seviyesindeki ürünler hangileri?
 SQL: SELECT product_name, quantity, reorder_level FROM canonical_inventory WHERE tenant_id = :tenant_id AND quantity < reorder_level
+
+Soru: Aylara göre toplam satışları listele.
+SQL: SELECT date_trunc('month', order_date) AS ay, SUM(total_amount) AS toplam_satis
+FROM canonical_orders
+WHERE tenant_id = :tenant_id
+GROUP BY ay
+ORDER BY toplam_satis DESC
+LIMIT 1000;
+
+Soru: En çok satış yapılan ay hangisidir?
+SQL: SELECT date_trunc('month', order_date) AS ay, SUM(total_amount) AS toplam_satis
+FROM canonical_orders
+WHERE tenant_id = :tenant_id
+GROUP BY ay
+ORDER BY toplam_satis DESC
+LIMIT 1;
+
+Soru: Stok seviyesi kritik olan ürünler hangileridir?
+SQL: SELECT product_name, quantity, reorder_level
+FROM canonical_inventory
+WHERE tenant_id = :tenant_id AND quantity < reorder_level
+LIMIT 1000;
+
+Soru: Müşterilere göre toplam satışları listele.
+SQL: SELECT c.name, SUM(o.total_amount) AS toplam_satis
+FROM canonical_orders o
+LEFT JOIN canonical_customers c
+  ON c.tenant_id = o.tenant_id
+ AND c.external_id = o.customer_external_id
+WHERE o.tenant_id = :tenant_id
+GROUP BY c.name
+ORDER BY toplam_satis DESC
+LIMIT 1000;
 """.strip()
 
 
