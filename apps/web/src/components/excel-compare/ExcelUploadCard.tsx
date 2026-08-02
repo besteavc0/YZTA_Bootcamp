@@ -98,6 +98,30 @@ function isSupportedExcelFile(file: File) {
   return fileName.endsWith(".xlsx") || fileName.endsWith(".csv");
 }
 
+function parseCsvHeaders(content: string) {
+  const firstLine = content
+    .replace(/^\uFEFF/, "")
+    .split(/\r?\n/)
+    .find((line) => line.trim().length > 0);
+
+  if (!firstLine) {
+    return [];
+  }
+
+  return firstLine
+    .split(",")
+    .map((header) => header.trim().replace(/^"|"$/g, ""))
+    .filter(Boolean);
+}
+
+function getMissingColumns(headers: string[], requiredColumns: string[]) {
+  const normalizedHeaders = headers.map((header) => header.toLowerCase());
+
+  return requiredColumns.filter(
+    (column) => !normalizedHeaders.includes(column.toLowerCase())
+  );
+}
+
 export function ExcelUploadCard({
   selectedFile,
   entityType,
@@ -111,35 +135,60 @@ export function ExcelUploadCard({
 
   const selectedTemplate = ENTITY_TEMPLATES[entityType];
 
-  function handleSelectedFile(file: File | null) {
-    setFileWarning(null);
+  async function handleSelectedFile(file: File | null) {
+  setFileWarning(null);
 
-    if (!file) {
-      onFileChange(null);
-      return;
-    }
-
-    if (!isSupportedExcelFile(file)) {
-      setFileWarning("Sadece .csv veya .xlsx dosyası yükleyebilirsiniz.");
-      onFileChange(null);
-      return;
-    }
-
-    if (file.name.toLowerCase().endsWith(".csv")) {
-      setFileWarning(
-        "CSV dosyası kullanıyorsanız dosyayı CSV UTF-8 formatında kaydettiğinizden emin olun."
-      );
-    }
-
-    onFileChange(file);
+  if (!file) {
+    onFileChange(null);
+    return;
   }
+
+  if (!isSupportedExcelFile(file)) {
+    setFileWarning("Sadece .csv veya .xlsx dosyası yükleyebilirsiniz.");
+    onFileChange(null);
+    return;
+  }
+
+  if (file.name.toLowerCase().endsWith(".csv")) {
+    try {
+      const content = await file.text();
+      const headers = parseCsvHeaders(content);
+      const missingColumns = getMissingColumns(
+        headers,
+        selectedTemplate.columns
+      );
+
+      if (missingColumns.length > 0) {
+        setFileWarning(
+          `${selectedTemplate.title} için yüklenen dosyada eksik kolonlar var: ${missingColumns.join(
+            ", "
+          )}. Lütfen doğru veri tipini seçin veya örnek CSV şablonunu indirip kullanın.`
+        );
+        onFileChange(null);
+        return;
+      }
+
+      setFileWarning(
+        "CSV dosyası seçildi. Dosyanın CSV UTF-8 formatında kaydedildiğinden emin olun."
+      );
+    } catch {
+      setFileWarning(
+        "CSV dosyası tarayıcıda okunamadı. Lütfen dosyayı CSV UTF-8 formatında kaydedip tekrar seçin."
+      );
+      onFileChange(null);
+      return;
+    }
+  }
+
+  onFileChange(file);
+}
 
   function handleDrop(event: React.DragEvent<HTMLLabelElement>) {
     event.preventDefault();
     setIsDragging(false);
 
     const file = event.dataTransfer.files?.[0] ?? null;
-    handleSelectedFile(file);
+    void handleSelectedFile(file);
   }
 
   return (

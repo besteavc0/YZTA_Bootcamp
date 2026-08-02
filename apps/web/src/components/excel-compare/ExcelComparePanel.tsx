@@ -77,12 +77,17 @@ function getFriendlyExcelError(message: string) {
   }
 
   if (
+    normalizedMessage.includes("eşleştirilemedi") ||
+    normalizedMessage.includes("beklenen") ||
+    normalizedMessage.includes("sütun") ||
+    normalizedMessage.includes("kolon") ||
+    normalizedMessage.includes("alanlar") ||
     normalizedMessage.includes("missing") ||
     normalizedMessage.includes("column") ||
     normalizedMessage.includes("required") ||
     normalizedMessage.includes("field")
   ) {
-    return "Dosyada beklenen kolonlar eksik görünüyor. Lütfen seçtiğiniz veri tipi için örnek CSV şablonunu indirip aynı kolon yapısıyla tekrar deneyin.";
+    return "Dosyadaki kolonlar seçili veri tipiyle uyumlu değil. Lütfen doğru veri tipini seçtiğinizden emin olun veya seçili veri tipi için örnek CSV şablonunu indirip aynı kolon yapısıyla tekrar deneyin.";
   }
 
   if (
@@ -111,7 +116,7 @@ function getFriendlyExcelError(message: string) {
     normalizedMessage.includes("failed to fetch") ||
     normalizedMessage.includes("network")
   ) {
-    return "Sunucuya ulaşılamadı. Lütfen bağlantınızı kontrol edin veya sayfayı yenileyip tekrar deneyin.";
+    return "Sunucuya ulaşılamadı. Lütfen sayfayı yenileyip tekrar deneyin. Sorun devam ederse dosyanın CSV UTF-8 formatında olduğundan ve doğru şablonla yüklendiğinden emin olun.";
   }
 
   return (
@@ -119,7 +124,6 @@ function getFriendlyExcelError(message: string) {
     "Excel karşılaştırma sırasında beklenmeyen bir hata oluştu. Lütfen dosya formatını ve seçili veri tipini kontrol edin."
   );
 }
-
 export function ExcelComparePanel() {
   const { getToken } = useAuth();
 
@@ -231,8 +235,9 @@ export function ExcelComparePanel() {
           setSelectedFile(file);
           resetCompareState();
         }}
-        onEntityTypeChange={(nextEntityType) => {
+          onEntityTypeChange={(nextEntityType) => {
           setEntityType(nextEntityType);
+          setSelectedFile(null);
           resetCompareState();
         }}
         onCompare={handleCompare}
