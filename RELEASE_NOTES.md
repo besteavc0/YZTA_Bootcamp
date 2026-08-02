@@ -1,6 +1,6 @@
 **ERPilot — MVP Sürümü · Sprint 3 Sonu**
 
-ERPilot MVP'si; doğal dilde (Türkçe) ERP sorgulama, güvenli Text-to-SQL pipeline, rol bazlı erişim, ERP connector mimarisi, anomali tespiti, Excel karşılaştırma ve günlük özet modüllerini içerir.
+ERPilot; doğal dilde (Türkçe) ERP sorgulama, güvenli Text-to-SQL pipeline, rol bazlı erişim, ERP connector mimarisi, anomali tespiti, Excel karşılaştırma ve günlük özet modüllerini içerir.
 
 ---
 
