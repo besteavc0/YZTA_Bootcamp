@@ -6,7 +6,7 @@ ERPilot MVP'si; doğal dilde (Türkçe) ERP sorgulama, güvenli Text-to-SQL pipe
 
 # Tamamlananlar
 
-- **Doğal dil sorgulama (Text-to-SQL):** RAG + LLM ile Türkçe soru → güvenli SQL → Türkçe yanıt
+- **Doğal dil sorgulama:** RAG + LLM ile Türkçe soru → güvenli SQL → Türkçe yanıt
 - **Güvenlik:** Clerk JWT auth, RBAC (admin/user/viewer), tenant izolasyonu, SQL injection koruması, audit log
 - **ERP Connector:** plugin mimarisi; Dolibarr (canlı test edildi) ve CSV connector'ları
 - **Senkronizasyon:** Celery worker ile ERP → canonical veri aktarımı
@@ -49,7 +49,7 @@ Sprint 3 sonunda tüm ekibin katıldığı entegrasyon test oturumu gerçekleşt
 | 5 | Dashboard rol bazlı metrikleri gösterir | P3 | ☑ |
 | 6 | Anomali tarama çalışır ve bulguları listeler | P4 | ☑ |
 | 7 | Excel yükleme → karşılaştırma sonucu | P4 | ☑ |
-| 8 | Güvenlik senaryoları (bkz. `SECURITY_TEST_RESULTS.md`) | P1 | ☑ |
+| 8 | Güvenlik senaryoları  | P1 | ☑ |
 | 9 | RBAC: viewer/user/admin doğru yetkilerle çalışır | P1 | ☑ |
 
 ---
