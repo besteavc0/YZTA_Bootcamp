@@ -6,7 +6,6 @@ from uuid import UUID
 
 
 class ERPConnectionCreate(BaseModel):
-    tenant_id: str
     name: str
     connector_type: str  # csv | erpnext | dolibarr | sap_b1 | logo
     config: dict[str, Any]  # duz JSON gelir, backend'de encrypt edilecek (TASK-020)
