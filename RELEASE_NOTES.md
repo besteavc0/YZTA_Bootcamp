@@ -17,7 +17,7 @@ ERPilot; doğal dilde (Türkçe) ERP sorgulama, güvenli Text-to-SQL pipeline, r
 
 ---
 
-# Modül Sahipliği
+# Modül
 
 | Alan | Sahip |
 |------|--------|
@@ -28,7 +28,7 @@ ERPilot; doğal dilde (Türkçe) ERP sorgulama, güvenli Text-to-SQL pipeline, r
 
 ---
 
-# Sistem Entegrasyon & Regresyon Testi (TASK-040)
+# Sistem Entegrasyon & Regresyon Testi
 
 Sprint 3 sonunda tüm ekibin katıldığı entegrasyon test oturumu gerçekleştirildi. Her modülün diğerleriyle birlikte doğru çalıştığı doğrulandı.
 
