@@ -141,15 +141,15 @@ Sprint Review katılımcıları: Beste (Product Owner), Hatice (Scrum Master).
 
 Daily Scrum toplantıları kolay iletişime geçebilmek nedeniyle Whatsapp üzerinden yazılı olarak yürütülmüştür. Örnek ekran görüntüleri:
 
-<img width="250" height="2048" alt="WhatsApp Image 2026-07-19 at 18 54 58 (3)" src="https://github.com/user-attachments/assets/c852183b-430a-4dcb-9ce9-9b4199e62eee" />
-<img width="250" height="2048" alt="WhatsApp Image 2026-07-19 at 18 54 58 (2)" src="https://github.com/user-attachments/assets/61dd74ca-5b2e-4c3a-ac95-92f8eb12ee6f" />
-<img width="250" height="2048" alt="WhatsApp Image 2026-07-19 at 18 54 58 (1)" src="https://github.com/user-attachments/assets/217aade0-0d17-49e2-89e9-7857540bde85" />
-<img width="250" height="2048" alt="WhatsApp Image 2026-07-19 at 18 54 58" src="https://github.com/user-attachments/assets/89e5c58c-07a0-4b22-92aa-9ee6879b3079" />
-<img width="250" height="2048" alt="WhatsApp Image 2026-07-19 at 18 54 58 (8)" src="https://github.com/user-attachments/assets/684681fc-5ebe-43fa-907c-8efa55452e89" />
-<img width="250" height="2048" alt="WhatsApp Image 2026-07-19 at 18 54 58 (7)" src="https://github.com/user-attachments/assets/82d55f4a-a3f9-4a0b-9e99-d595780d5258" />
-<img width="250" height="2048" alt="WhatsApp Image 2026-07-19 at 18 54 58 (6)" src="https://github.com/user-attachments/assets/9a9c5fe4-1753-4350-b8fa-e30fc2939cd3" />
-<img width="250" height="2048" alt="WhatsApp Image 2026-07-19 at 18 54 58 (5)" src="https://github.com/user-attachments/assets/9a84b015-eb9d-41d0-a6f4-ced68c4334c6" />
-<img width="250" height="2048" alt="WhatsApp Image 2026-07-19 at 18 54 58 (4)" src="https://github.com/user-attachments/assets/85e744d1-6d2e-4430-a34d-c45aa3766c62" />
+<img width="250"  alt="WhatsApp Image 2026-07-19 at 18 54 58 (3)" src="https://github.com/user-attachments/assets/c852183b-430a-4dcb-9ce9-9b4199e62eee" />
+<img width="250"  alt="WhatsApp Image 2026-07-19 at 18 54 58 (2)" src="https://github.com/user-attachments/assets/61dd74ca-5b2e-4c3a-ac95-92f8eb12ee6f" />
+<img width="250"  alt="WhatsApp Image 2026-07-19 at 18 54 58 (1)" src="https://github.com/user-attachments/assets/217aade0-0d17-49e2-89e9-7857540bde85" />
+<img width="250"  alt="WhatsApp Image 2026-07-19 at 18 54 58" src="https://github.com/user-attachments/assets/89e5c58c-07a0-4b22-92aa-9ee6879b3079" />
+<img width="250"  alt="WhatsApp Image 2026-07-19 at 18 54 58 (8)" src="https://github.com/user-attachments/assets/684681fc-5ebe-43fa-907c-8efa55452e89" />
+<img width="250"  alt="WhatsApp Image 2026-07-19 at 18 54 58 (7)" src="https://github.com/user-attachments/assets/82d55f4a-a3f9-4a0b-9e99-d595780d5258" />
+<img width="250"  alt="WhatsApp Image 2026-07-19 at 18 54 58 (6)" src="https://github.com/user-attachments/assets/9a9c5fe4-1753-4350-b8fa-e30fc2939cd3" />
+<img width="250"  alt="WhatsApp Image 2026-07-19 at 18 54 58 (5)" src="https://github.com/user-attachments/assets/9a84b015-eb9d-41d0-a6f4-ced68c4334c6" />
+<img width="250"  alt="WhatsApp Image 2026-07-19 at 18 54 58 (4)" src="https://github.com/user-attachments/assets/85e744d1-6d2e-4430-a34d-c45aa3766c62" />
 
 
 
