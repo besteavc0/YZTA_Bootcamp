@@ -64,13 +64,29 @@ LIMIT 1000;
 """.strip()
 
 def _normalize_question(question: str) -> str:
-    normalized = unicodedata.normalize("NFKD", question.casefold())
+    normalized = question.casefold()
+
+    # Türkçe karakterleri ASCII karşılıklarına indir.
+    translation_table = str.maketrans(
+        {
+            "ç": "c",
+            "ğ": "g",
+            "ı": "i",
+            "i̇": "i",
+            "ö": "o",
+            "ş": "s",
+            "ü": "u",
+        }
+    )
+    normalized = normalized.translate(translation_table)
+
+    normalized = unicodedata.normalize("NFKD", normalized)
     normalized = "".join(
         char for char in normalized if not unicodedata.combining(char)
     )
     normalized = re.sub(r"\s+", " ", normalized)
-    return normalized.strip()
 
+    return normalized.strip()
 
 def _contains_any(text: str, keywords: list[str]) -> bool:
     return any(keyword in text for keyword in keywords)
@@ -79,15 +95,38 @@ def _contains_any(text: str, keywords: list[str]) -> bool:
 def _generate_rule_based_sql(question: str) -> str | None:
     q = _normalize_question(question)
 
-    asks_sales = _contains_any(q, ["satis", "ciro", "tutar", "gelir"])
-    asks_month = _contains_any(q, ["ay", "aylar", "aylik", "hangi aylarda"])
+    asks_sales = _contains_any(
+    q,
+    ["satis", "ciro", "tutar", "gelir", "siparis"]
+)
+    asks_month = _contains_any(
+    q,
+    ["ay", "aylar", "aylik", "hangi aylarda", "aylarda"]
+)
     asks_customer = _contains_any(q, ["musteri", "cari"])
     asks_stock = _contains_any(q, ["stok", "urun", "envanter"])
     asks_critical = _contains_any(q, ["kritik", "az", "dusuk", "reorder"])
     asks_count = _contains_any(q, ["kac", "adet", "sayisi", "count"])
     asks_highest = _contains_any(q, ["en cok", "daha fazla", "en fazla", "yuksek"])
-    asks_this_year = _contains_any(q, ["bu yil", "2026", "yil"])
+    asks_this_year = _contains_any(
+    q,
+    ["bu yil", "bu sene", "2026", "yil", "sene"]
+)
     asks_this_month = _contains_any(q, ["bu ay", "ay toplam"])
+
+    if _contains_any(q, ["hangi aylarda", "aylarda satis", "bu yil hangi aylarda"]):
+        return """
+SELECT
+  to_char(date_trunc('month', order_date), 'YYYY-MM') AS ay,
+  SUM(total_amount) AS toplam_satis,
+  COUNT(*) AS siparis_sayisi
+FROM canonical_orders
+WHERE tenant_id = :tenant_id
+  AND order_date >= date_trunc('year', CURRENT_DATE)
+GROUP BY date_trunc('month', order_date)
+ORDER BY date_trunc('month', order_date)
+LIMIT 1000
+""".strip()
 
     if asks_stock and asks_critical:
         return """
