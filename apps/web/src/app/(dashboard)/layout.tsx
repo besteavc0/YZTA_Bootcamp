@@ -1,4 +1,5 @@
 import { Sidebar } from "@/components/layout/Sidebar";
+import { AuthReadyGate } from "@/components/auth/AuthReadyGate";
 
 export default function DashboardLayout({
   children,
@@ -6,6 +7,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }>) {
   return (
+    <AuthReadyGate>
     <div className="flex min-h-screen bg-muted/30">
       <Sidebar />
 
@@ -13,5 +15,6 @@ export default function DashboardLayout({
         <div className="mx-auto max-w-7xl p-8">{children}</div>
       </main>
     </div>
+    </AuthReadyGate>
   );
 }
