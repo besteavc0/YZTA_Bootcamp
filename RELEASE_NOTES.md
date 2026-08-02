@@ -1,10 +1,10 @@
 **ERPilot — MVP Sürümü · Sprint 3 Sonu**
 
-ERPilot MVP'si; doğal dilde (Türkçe) ERP sorgulama, güvenli Text-to-SQL pipeline, rol bazlı erişim, ERP connector mimarisi (Dolibarr/CSV), anomali tespiti, Excel karşılaştırma ve günlük özet modüllerini içerir.
+ERPilot; doğal dilde (Türkçe) ERP sorgulama, güvenli Text-to-SQL pipeline, rol bazlı erişim, ERP connector mimarisi (Dolibarr/CSV), anomali tespiti, Excel karşılaştırma ve günlük özet modüllerini içerir.
 
 ---
 
-# Tamamlanan Ana Yetenekler
+# Tamamlananlar
 
 - **Doğal dil sorgulama (Text-to-SQL):** RAG + LLM ile Türkçe soru → güvenli SQL → Türkçe yanıt
 - **Güvenlik:** Clerk JWT auth, RBAC (admin/user/viewer), tenant izolasyonu, SQL injection koruması, audit log
@@ -17,7 +17,7 @@ ERPilot MVP'si; doğal dilde (Türkçe) ERP sorgulama, güvenli Text-to-SQL pipe
 
 ---
 
-# Modül Sahipliği
+# Modül
 
 | Alan | Sahip |
 |------|--------|
@@ -28,13 +28,13 @@ ERPilot MVP'si; doğal dilde (Türkçe) ERP sorgulama, güvenli Text-to-SQL pipe
 
 ---
 
-# Sistem Entegrasyon & Regresyon Testi (TASK-040)
+# Sistem Entegrasyon & Regresyon Testi 
 
-Sprint 3 sonunda tüm ekibin katıldığı entegrasyon test oturumu gerçekleştirildi. Her modülün diğerleriyle birlikte doğru çalıştığı doğrulandı.
+Sprint 3 sonunda tüm ekibin katıldığı entegrasyon testi gerçekleştirildi. Her modülün diğerleriyle birlikte doğru çalıştığı doğrulandı.
 
 > **P1 sorumluluğu:** güvenlik akışı + AI pipeline entegrasyonu.  
 > **Tarih:** 31.07.2026  
-> **Katılımcılar:** tüm ekip (Beste, Medine, Yusuf, Hatice)
+> **Katılımcılar:** Beste, Medine, Yusuf, Hatice
 
 ---
 
@@ -49,22 +49,14 @@ Sprint 3 sonunda tüm ekibin katıldığı entegrasyon test oturumu gerçekleşt
 | 5 | Dashboard rol bazlı metrikleri gösterir | P3 | ☑ |
 | 6 | Anomali tarama çalışır ve bulguları listeler | P4 | ☑ |
 | 7 | Excel yükleme → karşılaştırma sonucu | P4 | ☑ |
-| 8 | Güvenlik senaryoları (bkz. `SECURITY_TEST_RESULTS.md`) | P1 | ☑ |
+| 8 | Güvenlik senaryoları (`SECURITY_TEST_RESULTS.md`) | P1 | ☑ |
 | 9 | RBAC: viewer/user/admin doğru yetkilerle çalışır | P1 | ☑ |
-
----
-
-# Tespit Edilen Regresyonlar / Sorunlar
-
-| Sorun | Etki | Durum |
-|-------|------|--------|
-| Audit endpoint router'a bağlı değildi (404) | Güvenlik testi Senaryo 3 | ☑ giderildi (fix/audit-router) |
 
 ---
 
 # Sonuç
 
-**Genel entegrasyon durumu:** ☑ **Başarılı**
+**Genel durumu:** ☑ **Başarılı**
 
 9/9 entegrasyon senaryosu başarıyla doğrulandı. Tespit edilen 1 regresyon (audit router) giderildi.
 
@@ -73,9 +65,7 @@ Sprint 3 sonunda tüm ekibin katıldığı entegrasyon test oturumu gerçekleşt
 # Bilinen Sınırlar
 
 - Oracle/SAP connector'ları iskelet halindedir; ürün fazında doldurulacaktır.
-- ERP config şifrelemesi (TASK-020) entegrasyon aşamasındadır; üretim öncesi Fernet ile tamamlanacaktır.
-- Rate limiting/WAF deployment katmanında eklenmelidir.
-
+  
 ---
 
 # Kurulum & Dokümantasyon
