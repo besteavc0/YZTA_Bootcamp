@@ -217,14 +217,14 @@ Sprint Review katılımcıları: Beste (Product Owner), Medine, Yusuf, Hatice (S
 
 Daily Scrum toplantıları kolay iletişime geçebilmek nedeniyle Whatsapp üzerinden yazılı olarak yürütülmüştür. Örnek ekran görüntüleri:
 
-<img width="921" height="2048" alt="WhatsApp Image 2026-08-02 at 13 39 25" src="https://github.com/user-attachments/assets/0af21fe8-ee5f-4a60-ab7a-aa8b6950b8a3" />
-<img width="921" height="2048" alt="WhatsApp Image 2026-08-02 at 13 39 34" src="https://github.com/user-attachments/assets/41f1434b-e0e1-4ad7-8882-fe3cd815a0f7" />
-<img width="921" height="2048" alt="WhatsApp Image 2026-08-02 at 13 39 34 (1)" src="https://github.com/user-attachments/assets/786efab5-d20c-4bc0-83a2-1e1d8250dfb1" />
-<img width="921" height="2048" alt="WhatsApp Image 2026-08-02 at 13 39 33" src="https://github.com/user-attachments/assets/d4d62653-6748-4077-96c0-f2237416275b" />
-<img width="921" height="2048" alt="WhatsApp Image 2026-08-02 at 13 39 33 (1)" src="https://github.com/user-attachments/assets/4f104620-7c2a-4427-9d40-c683c66c6443" />
-<img width="921" height="2048" alt="WhatsApp Image 2026-08-02 at 13 39 32" src="https://github.com/user-attachments/assets/e339a993-4068-4123-a220-9031a7bff06c" />
-<img width="921" height="2048" alt="WhatsApp Image 2026-08-02 at 13 39 29" src="https://github.com/user-attachments/assets/7163c06a-6cd6-43aa-88d8-6baf83d219bb" />
-<img width="921" height="2048" alt="WhatsApp Image 2026-08-02 at 13 39 28" src="https://github.com/user-attachments/assets/ff3065ff-39ad-4c1f-ac64-c1c7b102bd8a" />
+<img width="250" alt="WhatsApp Image 2026-08-02 at 13 39 25" src="https://github.com/user-attachments/assets/0af21fe8-ee5f-4a60-ab7a-aa8b6950b8a3" />
+<img width="250" alt="WhatsApp Image 2026-08-02 at 13 39 34" src="https://github.com/user-attachments/assets/41f1434b-e0e1-4ad7-8882-fe3cd815a0f7" />
+<img width="250" alt="WhatsApp Image 2026-08-02 at 13 39 34 (1)" src="https://github.com/user-attachments/assets/786efab5-d20c-4bc0-83a2-1e1d8250dfb1" />
+<img width="250" alt="WhatsApp Image 2026-08-02 at 13 39 33" src="https://github.com/user-attachments/assets/d4d62653-6748-4077-96c0-f2237416275b" />
+<img width="250" alt="WhatsApp Image 2026-08-02 at 13 39 33 (1)" src="https://github.com/user-attachments/assets/4f104620-7c2a-4427-9d40-c683c66c6443" />
+<img width="250" alt="WhatsApp Image 2026-08-02 at 13 39 32" src="https://github.com/user-attachments/assets/e339a993-4068-4123-a220-9031a7bff06c" />
+<img width="250" alt="WhatsApp Image 2026-08-02 at 13 39 29" src="https://github.com/user-attachments/assets/7163c06a-6cd6-43aa-88d8-6baf83d219bb" />
+<img width="250" alt="WhatsApp Image 2026-08-02 at 13 39 28" src="https://github.com/user-attachments/assets/ff3065ff-39ad-4c1f-ac64-c1c7b102bd8a" />
 
 
 ## Ürün Durumu: Ekran Görüntüleri
