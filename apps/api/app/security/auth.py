@@ -61,6 +61,18 @@ async def _upsert_user(db: AsyncSession, auth_provider_id: str, email: str, name
         # İlk giriş: varsayılan (ilk) tenant'a bağla, 'user' rolüyle oluştur.
         tenant_result = await db.execute(text("SELECT id FROM tenants ORDER BY created_at LIMIT 1"))
         tenant_id = tenant_result.scalar()
+        if tenant_id is None:
+            tenant_insert = await db.execute(
+                text(
+                    """
+                    INSERT INTO tenants (name)
+                    VALUES (:name)
+                    RETURNING id
+                    """
+                ),
+                {"name": "Demo Tenant"},
+            )
+            tenant_id = tenant_insert.scalar()
         insert = await db.execute(
             text(
                 "INSERT INTO users (tenant_id, auth_provider_id, email, full_name, role, last_login_at) "

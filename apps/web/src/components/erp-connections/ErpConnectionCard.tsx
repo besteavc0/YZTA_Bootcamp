@@ -1,4 +1,4 @@
-import { Database, PlugZap, Settings } from "lucide-react";
+import { Database, PlugZap, RefreshCw, Settings, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,6 +12,10 @@ type ErpConnectionCardProps = {
   isTesting: boolean;
   onTestConnection: (connectionId: string) => void;
   onEditConnection: (connectionId: string) => void;
+  isSyncing?: boolean;
+  onSyncConnection?: (connectionId: string) => void;
+  isDeleting?: boolean;
+  onDeleteConnection?: (connectionId: string) => void;
 };
 
 function formatDateTime(value: string | null) {
@@ -30,6 +34,10 @@ export function ErpConnectionCard({
   isTesting,
   onTestConnection,
   onEditConnection,
+  isSyncing = false,
+  onSyncConnection,
+  isDeleting = false,
+  onDeleteConnection,
 }: ErpConnectionCardProps) {
   return (
     <Card>
@@ -84,12 +92,32 @@ export function ErpConnectionCard({
   </Button>
 
   <Button
+  type="button"
+  variant="outline"
+  size="sm"
+  disabled={isSyncing}
+  onClick={() => onSyncConnection?.(connection.id)}
+>
+  <RefreshCw className="mr-2 h-4 w-4" />
+  {isSyncing ? "Sync başlatılıyor..." : "Sync Başlat"}
+</Button>
+
+  <Button
     type="button"
     variant="secondary"
     onClick={() => onEditConnection(connection.id)}
   >
     <Settings className="mr-2 h-4 w-4" />
     Ayarları Düzenle
+  </Button>
+    <Button
+    type="button"
+    variant="destructive"
+    disabled={isDeleting}
+    onClick={() => onDeleteConnection?.(connection.id)}
+  >
+    <Trash2 className="mr-2 h-4 w-4" />
+    {isDeleting ? "Siliniyor..." : "Bağlantıyı Sil"}
   </Button>
 </div>
       </CardContent>

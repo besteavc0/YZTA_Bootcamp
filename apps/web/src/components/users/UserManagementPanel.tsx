@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useAuth, useUser } from "@clerk/nextjs";
-import { useRouter } from "next/navigation";
+import { useAuth } from "@clerk/nextjs";
 
 import {
   getManagedUsers,
@@ -22,9 +21,7 @@ import { UserManagementSummaryCards } from "./UserManagementSummaryCards";
 import { UserManagementTable } from "./UserManagementTable";
 
 export function UserManagementPanel() {
-  const router = useRouter();
-  const { getToken } = useAuth();
-  const { user, isLoaded } = useUser();
+    const { getToken, isLoaded } = useAuth();
 
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -36,17 +33,9 @@ export function UserManagementPanel() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const role = user?.publicMetadata?.role ?? "user";
-  const isAdmin = role === "admin";
 
-  useEffect(() => {
-    if (isLoaded && !isAdmin) {
-      router.push("/dashboard");
-    }
-  }, [isLoaded, isAdmin, router]);
-
-  useEffect(() => {
-    if (!isLoaded || !isAdmin) {
+    useEffect(() => {
+    if (!isLoaded) {
       return;
     }
 
@@ -87,7 +76,7 @@ export function UserManagementPanel() {
     return () => {
       isMounted = false;
     };
-  }, [getToken, isAdmin, isLoaded, refreshKey]);
+  }, [getToken, isLoaded, refreshKey]);
 
   const filteredUsers = users.filter((managedUser) => {
     const normalizedSearchQuery = searchQuery.trim().toLowerCase();
@@ -193,14 +182,6 @@ export function UserManagementPanel() {
 
   if (!isLoaded) {
     return <div className="h-40 animate-pulse rounded-lg bg-muted" />;
-  }
-
-  if (!isAdmin) {
-    return (
-      <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
-        Bu sayfaya erişim yetkiniz yok. Dashboard sayfasına yönlendiriliyorsunuz.
-      </div>
-    );
   }
 
   if (isLoading) {

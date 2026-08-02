@@ -12,6 +12,7 @@ from connectors.registry import register_connector
 _KNOWN_CONNECTORS = [
     ("connectors.csv.connector", "csv", "CSVConnector"),           # TASK-006 (P2)
     ("connectors.dolibarr.connector", "dolibarr", "DolibarrConnector"),  # ücretsiz ERP denemesi (P1)
+    ("connectors.erpnext.connector", "erpnext", "ERPNextConnector"),  # TASK-035a (P2)
     ("connectors.sap_b1.connector", "sap_b1", "SAPB1Connector"),   # TASK-035 (P2) / ürün fazı
     ("connectors.logo.connector", "logo", "LogoConnector"),        # TASK-035 (P2) / ürün fazı
     ("connectors.oracle.connector", "oracle", "OracleConnector"),  # ürün fazı

@@ -20,8 +20,9 @@ from app.services.sql_validator import validate_sql  # noqa: E402
 client = TestClient(app)
 
 _conn = psycopg2.connect(
-    os.environ.get("PG_TEST_DSN", "postgresql://erpilot:erpilot@localhost:5432/erpilot")
+    os.environ.get("PG_TEST_DSN", "postgresql://erpilot:erpilot@postgres:5432/erpilot")
 )
+
 _cur = _conn.cursor()
 _cur.execute("SELECT id FROM tenants ORDER BY created_at LIMIT 1")
 TENANT_A = str(_cur.fetchone()[0])

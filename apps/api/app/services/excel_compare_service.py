@@ -97,6 +97,20 @@ def _auto_map_columns(
 
     return mapping
 
+def read_csv_with_fallback(file_bytes: bytes) -> pd.DataFrame:
+    encodings = ("utf-8-sig", "utf-8", "cp1254", "iso-8859-9", "latin-1")
+    last_error: Exception | None = None
+
+    for encoding in encodings:
+        try:
+            return pd.read_csv(io.BytesIO(file_bytes), encoding=encoding)
+        except UnicodeDecodeError as exc:
+            last_error = exc
+
+    raise ExcelValidationError(
+        "CSV dosyası okunamadı. Lütfen dosyayı CSV UTF-8 formatında kaydedip tekrar yükleyin."
+    ) from last_error
+
 
 def parse_excel(
     file_bytes: bytes, filename: str, entity_type: str
@@ -125,7 +139,7 @@ def parse_excel(
         )
 
     if filename.lower().endswith(".csv"):
-        df = pd.read_csv(io.BytesIO(file_bytes))
+       df = read_csv_with_fallback(file_bytes)
     elif filename.lower().endswith((".xlsx", ".xls")):
         df = pd.read_excel(io.BytesIO(file_bytes))
     else:
@@ -233,9 +247,11 @@ class ExcelCompareService:
           3) İki tarafı external_id üzerinden karşılaştır
           4) excel_diff_results tablosuna yaz
         """
+        tenant_uuid = tenant_id if isinstance(tenant_id, UUID) else UUID(str(tenant_id))
+
         upload = await self.db.get(ExcelUpload, upload_id)
-        if upload is None or upload.tenant_id != tenant_id:
-            raise ValueError(f"Upload bulunamadı: {upload_id}")
+        if upload is None or str(upload.tenant_id) != str(tenant_uuid):
+                raise ValueError(f"Upload bulunamadı: {upload_id}")
 
         entity_type = upload.entity_type
         column_mapping = upload.column_mapping or {}
@@ -251,7 +267,7 @@ class ExcelCompareService:
 
         # 1) Canonical tablodaki tüm tenant verisini çek
         result = await self.db.execute(
-            select(model).where(model.tenant_id == tenant_id)
+            select(model).where(model.tenant_id == tenant_uuid)
         )
         canonical_rows = list(result.scalars().all())
         canonical_by_id = {row.external_id: row for row in canonical_rows}
@@ -277,7 +293,7 @@ class ExcelCompareService:
         # only_in_excel: Excel'de var, canonical'da yok
         for ext_id in excel_ids - canonical_ids:
             diff = ExcelDiffResult(
-                tenant_id=tenant_id,
+                tenant_id=tenant_uuid,
                 upload_id=upload_id,
                 diff_type="only_in_excel",
                 external_id=ext_id,
@@ -291,7 +307,7 @@ class ExcelCompareService:
         for ext_id in canonical_ids - excel_ids:
             canonical_obj = canonical_by_id[ext_id]
             diff = ExcelDiffResult(
-                tenant_id=tenant_id,
+                tenant_id=tenant_uuid,
                 upload_id=upload_id,
                 diff_type="only_in_erp",
                 external_id=ext_id,
@@ -322,7 +338,7 @@ class ExcelCompareService:
 
             if is_mismatch:
                 diff = ExcelDiffResult(
-                    tenant_id=tenant_id,
+                    tenant_id=tenant_uuid,
                     upload_id=upload_id,
                     diff_type="mismatch",
                     external_id=ext_id,

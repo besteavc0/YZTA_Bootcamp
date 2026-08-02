@@ -1,4 +1,4 @@
-"""TASK-019 · Audit log Pydantic şemaları."""
+"""Audit log Pydantic şemaları."""
 
 from datetime import datetime
 from typing import Any, Optional
@@ -19,3 +19,10 @@ class AuditLogResponse(BaseModel):
     ip_address: Optional[str] = None
     status: str
     created_at: datetime
+
+
+class AuditLogListResponse(BaseModel):
+    items: list[AuditLogResponse]
+    total_count: int
+    limit: int
+    offset: int

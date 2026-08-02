@@ -18,6 +18,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
   redis:
     image: redis:7-alpine
     container_name: erpilot_redis
@@ -29,6 +30,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
   api:
     build:
       context: .
@@ -44,8 +46,10 @@ services:
       redis:
         condition: service_healthy
     volumes:
-      - ./apps/api:/app
+      - ./apps/api/app:/app/app
+      - ./apps/api/tests:/app/tests
       - ./connectors:/app/connectors
+      - ./workers:/app/workers
   worker:
     build:
       context: .
@@ -59,6 +63,29 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    volumes:
+      - ./apps/api/app:/app/app
+      - ./connectors:/app/connectors
+      - ./workers:/app/workers
+
+  beat:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: erpilot_beat
+    restart: unless-stopped
+    command: ["celery", "-A", "workers.celery_app", "beat", "--loglevel=info"]
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./apps/api/app:/app/app
+      - ./connectors:/app/connectors
+      - ./workers:/app/workers
+
   web:
     build:
       context: ./apps/web
@@ -68,7 +95,48 @@ services:
       - "3000:3000"
     depends_on:
       - api
+
+  dolibarr_db:
+    image: mariadb:10.11
+    container_name: erpilot_dolibarr_db
+    restart: unless-stopped
+    environment:
+      - MYSQL_ROOT_PASSWORD=dolibarr
+      - MYSQL_DATABASE=dolibarr
+      - MYSQL_USER=dolibarr
+      - MYSQL_PASSWORD=dolibarr
+    volumes:
+      - dolibarr_db_data:/var/lib/mysql
+
+  dolibarr:
+    image: dolibarr/dolibarr:latest
+    container_name: erpilot_dolibarr
+    ports:
+      - "8082:80"
+    environment:
+      - DOLI_DB_HOST=dolibarr_db
+      - DOLI_DB_NAME=dolibarr
+      - DOLI_DB_USER=dolibarr
+      - DOLI_DB_PASSWORD=dolibarr
+    depends_on:
+      - dolibarr_db
+    restart: always
+
+  erpnext:
+    image: frappe/erpnext:latest
+    container_name: erpilot_erpnext
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - erpnext_data:/home/frappe/frappe-bench/sites
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/api/method/frappe.auth.get_logged_user || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
 volumes:
   pgdata:
-
-
+  dolibarr_db_data:
+  erpnext_data:

@@ -14,8 +14,16 @@ _MAX_LIMIT = 1000
 
 def _strip_sql(sql: str) -> str:
     cleaned = sql.strip()
+
+    # Markdown code block temizliği
     cleaned = re.sub(r"^```(?:sql)?", "", cleaned, flags=re.IGNORECASE).strip()
     cleaned = re.sub(r"```$", "", cleaned).strip()
+
+    # LLM bazen cevabı "SQL: SELECT ..." formatında döndürüyor.
+    # sqlparse bunu SELECT değil UNKNOWN olarak algılıyor.
+    cleaned = re.sub(r"^\s*SQL\s*:\s*", "", cleaned, flags=re.IGNORECASE).strip()
+    cleaned = re.sub(r"^\s*Sorgu\s*:\s*", "", cleaned, flags=re.IGNORECASE).strip()
+
     return cleaned.rstrip(";").strip()
 
 
@@ -33,6 +41,9 @@ def validate_sql(sql: str, tenant_id: str) -> tuple[bool, str]:
     stmt_type = statements[0].get_type()
     if stmt_type != "SELECT":
         return False, f"Yalnızca SELECT sorgularına izin verilir (bulunan: {stmt_type})."
+
+    if not cleaned.upper().lstrip().startswith("SELECT"):
+        return False, "Sorgu SELECT ile başlamalıdır."
 
     for kw in _FORBIDDEN_KEYWORDS:
         if re.search(rf"\b{kw}\b", upper):

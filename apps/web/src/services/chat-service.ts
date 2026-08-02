@@ -57,7 +57,7 @@ export async function getChatHistory(
     }
   );
 
-  return response.items.map(mapChatHistoryItem);
+  return response.items.map(mapChatHistoryItem).reverse();
 }
 
 export async function sendChatMessage(
@@ -179,7 +179,7 @@ export async function getChatHistoryPairs(
   }
 );
 
-const messages = response.items.map(mapChatHistoryItem);
+const messages = response.items.map(mapChatHistoryItem).reverse();
 
 return {
   items: mapMessagesToHistoryPairs(messages),
@@ -241,3 +241,14 @@ function mapMessagesToHistoryPairs(messages: ChatMessage[]): ChatHistoryPair[] {
   return pairs;
 }
 
+type ClearChatHistoryResponse = {
+  success: boolean;
+  deleted_count: number;
+};
+
+export async function clearChatHistory(token?: string | null) {
+  return apiFetch<ClearChatHistoryResponse>("/api/v1/chat/history", {
+    method: "DELETE",
+    token,
+  });
+}

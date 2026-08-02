@@ -2,18 +2,18 @@
 from datetime import datetime
 from typing import Any
 from pydantic import BaseModel
+from uuid import UUID
 
 
 class ERPConnectionCreate(BaseModel):
-    tenant_id: str
     name: str
     connector_type: str  # csv | erpnext | dolibarr | sap_b1 | logo
     config: dict[str, Any]  # duz JSON gelir, backend'de encrypt edilecek (TASK-020)
 
 
 class ERPConnectionResponse(BaseModel):
-    id: str
-    tenant_id: str
+    id: UUID
+    tenant_id: UUID
     name: str
     connector_type: str
     is_active: bool
@@ -23,9 +23,9 @@ class ERPConnectionResponse(BaseModel):
 
 
 class SyncRunResponse(BaseModel):
-    id: str
-    tenant_id: str
-    erp_connection_id: str
+    id: UUID
+    tenant_id: UUID
+    erp_connection_id: UUID
     started_at: datetime
     finished_at: datetime | None = None
     rows_synced: int | None = None

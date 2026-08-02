@@ -29,8 +29,9 @@ ERPilot; doğal dilde (Türkçe) ERP sorgulama, güvenli Text-to-SQL pipeline, r
 ---
 
 # Sistem Entegrasyon & Regresyon Testi
+# Sistem Entegrasyon & Regresyon Testi 
 
-Sprint 3 sonunda tüm ekibin katıldığı entegrasyon test oturumu gerçekleştirildi. Her modülün diğerleriyle birlikte doğru çalıştığı doğrulandı.
+Sprint 3 sonunda tüm ekibin katıldığı entegrasyon testi gerçekleştirildi. Her modülün diğerleriyle birlikte doğru çalıştığı doğrulandı.
 
 > **P1 sorumluluğu:** güvenlik akışı + AI pipeline entegrasyonu.  
 > **Tarih:** 31.07.2026  
@@ -50,13 +51,14 @@ Sprint 3 sonunda tüm ekibin katıldığı entegrasyon test oturumu gerçekleşt
 | 6 | Anomali tarama çalışır ve bulguları listeler | P4 | ☑ |
 | 7 | Excel yükleme → karşılaştırma sonucu | P4 | ☑ |
 | 8 | Güvenlik senaryoları  | P1 | ☑ |
+| 8 | Güvenlik senaryoları (`SECURITY_TEST_RESULTS.md`) | P1 | ☑ |
 | 9 | RBAC: viewer/user/admin doğru yetkilerle çalışır | P1 | ☑ |
 
 ---
 
 # Sonuç
 
-**Genel entegrasyon durumu:** ☑ **Başarılı**
+**Genel durumu:** ☑ **Başarılı**
 
 9/9 entegrasyon senaryosu başarıyla doğrulandı. Tespit edilen başarısız durumlar düzeltildi.
 
@@ -65,8 +67,6 @@ Sprint 3 sonunda tüm ekibin katıldığı entegrasyon test oturumu gerçekleşt
 # Sınırlar
 
 - Oracle/SAP connector'ları iskelet halindedir; ürün fazında doldurulacaktır.
-- ERP config şifrelemesi (TASK-020) entegrasyon aşamasındadır; üretim öncesi Fernet ile tamamlanacaktır.
-- Rate limiting/WAF deployment katmanında eklenmelidir.
-
+  
 ---
 

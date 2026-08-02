@@ -1,12 +1,11 @@
 """
-ERP baglantilarini senkronize eden Celery task'i (TASK-007).
+ERP bağlantılarını Celery worker ile senkronize eden task.
 
-Su an icin config_encrypted alani duz JSON olarak okunuyor - TASK-020'de
-gercek Fernet decrypt entegre edilecek (_decrypt_config fonksiyonu
-o zaman guncellenecek).
+TASK-020 kapsamında erp_connections.config_encrypted alanı Fernet ile
+şifrelenmiş olarak saklanır. Worker, sync öncesinde config'i decrypt eder
+ve connector'a çözümlenmiş config'i verir.
 """
 import os
-import json
 import uuid
 
 import psycopg2
@@ -14,6 +13,8 @@ from psycopg2.extras import RealDictCursor
 
 from workers.celery_app import celery_app
 from connectors.registry import get_connector
+
+from app.security.encryption import decrypt_config
 
 # Celery worker senkron calisir (asyncpg degil, duz psycopg2 kullaniyoruz).
 # DATABASE_URL app tarafinda "postgresql+asyncpg://..." formatinda olabilir,
@@ -37,8 +38,7 @@ def _get_connection_row(cur, connection_id: str):
 
 
 def _decrypt_config(config_encrypted: str) -> dict:
-    # TODO(TASK-020): burada gercek Fernet decrypt_config() cagrilacak.
-    return json.loads(config_encrypted)
+    return decrypt_config(config_encrypted)
 
 
 @celery_app.task(bind=True, max_retries=3, default_retry_delay=30)

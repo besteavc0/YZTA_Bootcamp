@@ -1,19 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
+
 import { ExcelCompareFilters } from "./ExcelCompareFilters";
+import { ExcelCompareResultsTable } from "./ExcelCompareResultsTable";
+import { ExcelCompareSummaryCards } from "./ExcelCompareSummaryCards";
+import { ExcelUploadCard } from "./ExcelUploadCard";
 
 import {
   compareExcelFile,
   type ExcelCompareResponse,
   type ExcelCompareResult,
   type ExcelCompareStatusFilter,
+  type ExcelEntityType,
 } from "@/services/excel-compare-service";
-
-import { ExcelCompareResultsTable } from "./ExcelCompareResultsTable";
-import { ExcelCompareSummaryCards } from "./ExcelCompareSummaryCards";
-import { ExcelUploadCard } from "./ExcelUploadCard";
 
 function escapeCsvValue(value: string | number) {
   const stringValue = String(value);
@@ -63,10 +64,71 @@ function downloadCsv(results: ExcelCompareResult[], fileName: string) {
   URL.revokeObjectURL(url);
 }
 
+function getFriendlyExcelError(message: string) {
+  const normalizedMessage = message.toLowerCase();
+
+  if (
+    normalizedMessage.includes("utf-8") ||
+    normalizedMessage.includes("codec") ||
+    normalizedMessage.includes("decode") ||
+    normalizedMessage.includes("invalid continuation byte")
+  ) {
+    return "Dosya okunamadı. Lütfen CSV dosyasını CSV UTF-8 formatında kaydedip tekrar yükleyin. Excel kullanıyorsanız Farklı Kaydet > CSV UTF-8 seçeneğini kullanın.";
+  }
+
+  if (
+    normalizedMessage.includes("eşleştirilemedi") ||
+    normalizedMessage.includes("beklenen") ||
+    normalizedMessage.includes("sütun") ||
+    normalizedMessage.includes("kolon") ||
+    normalizedMessage.includes("alanlar") ||
+    normalizedMessage.includes("missing") ||
+    normalizedMessage.includes("column") ||
+    normalizedMessage.includes("required") ||
+    normalizedMessage.includes("field")
+  ) {
+    return "Dosyadaki kolonlar seçili veri tipiyle uyumlu değil. Lütfen doğru veri tipini seçtiğinizden emin olun veya seçili veri tipi için örnek CSV şablonunu indirip aynı kolon yapısıyla tekrar deneyin.";
+  }
+
+  if (
+    normalizedMessage.includes("unsupported") ||
+    normalizedMessage.includes("format") ||
+    normalizedMessage.includes("file type")
+  ) {
+    return "Dosya formatı desteklenmiyor. Lütfen .csv veya .xlsx formatında bir dosya yükleyin.";
+  }
+
+  if (
+    normalizedMessage.includes("401") ||
+    normalizedMessage.includes("unauthorized")
+  ) {
+    return "Oturum doğrulanamadı. Lütfen sayfayı yenileyip tekrar deneyin.";
+  }
+
+  if (
+    normalizedMessage.includes("403") ||
+    normalizedMessage.includes("forbidden")
+  ) {
+    return "Bu işlem için yetkiniz bulunmuyor. Lütfen kullanıcı rolünüzü kontrol edin.";
+  }
+
+  if (
+    normalizedMessage.includes("failed to fetch") ||
+    normalizedMessage.includes("network")
+  ) {
+    return "Sunucuya ulaşılamadı. Lütfen sayfayı yenileyip tekrar deneyin. Sorun devam ederse dosyanın CSV UTF-8 formatında olduğundan ve doğru şablonla yüklendiğinden emin olun.";
+  }
+
+  return (
+    message ||
+    "Excel karşılaştırma sırasında beklenmeyen bir hata oluştu. Lütfen dosya formatını ve seçili veri tipini kontrol edin."
+  );
+}
 export function ExcelComparePanel() {
   const { getToken } = useAuth();
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [entityType, setEntityType] = useState<ExcelEntityType>("orders");
   const [compareResult, setCompareResult] =
     useState<ExcelCompareResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -89,79 +151,97 @@ export function ExcelComparePanel() {
 
       const response = await compareExcelFile({
         file: selectedFile,
+        entityType,
         token,
       });
 
       setCompareResult(response);
-    } catch (error) {
+        } catch (error) {
+      console.error("Excel compare failed:", error);
+
       const message =
         error instanceof Error
           ? error.message
           : "Excel karşılaştırma sırasında beklenmeyen bir hata oluştu.";
 
-      setErrorMessage(message);
+      setErrorMessage(getFriendlyExcelError(message));
     } finally {
       setIsLoading(false);
     }
   }
 
-  const filteredResults =
-  compareResult?.results.filter((result) => {
-    const normalizedSearchQuery = searchQuery.trim().toLowerCase();
+  const filteredResults = useMemo(() => {
+    return (
+      compareResult?.results.filter((result) => {
+        const normalizedSearchQuery = searchQuery.trim().toLowerCase();
 
-    const searchableText = [
-      result.rowNumber,
-      result.sourceRef,
-      result.fieldName,
-      result.excelValue,
-      result.erpValue,
-      result.status,
-      result.note,
-    ]
-      .join(" ")
-      .toLowerCase();
+        const searchableText = [
+          result.rowNumber,
+          result.sourceRef,
+          result.fieldName,
+          result.excelValue,
+          result.erpValue,
+          result.status,
+          result.note,
+        ]
+          .join(" ")
+          .toLowerCase();
 
-    const matchesSearch =
-      normalizedSearchQuery.length === 0 ||
-      searchableText.includes(normalizedSearchQuery);
+        const matchesSearch =
+          normalizedSearchQuery.length === 0 ||
+          searchableText.includes(normalizedSearchQuery);
 
-    const matchesStatus =
-      statusFilter === "all" || result.status === statusFilter;
+        const matchesStatus =
+          statusFilter === "all" || result.status === statusFilter;
 
-    const matchesOnlyIssues =
-      !onlyIssues || result.status === "different" || result.status === "missing";
+        const matchesOnlyIssues =
+          !onlyIssues ||
+          result.status === "different" ||
+          result.status === "missing";
 
-    return matchesSearch && matchesStatus && matchesOnlyIssues;
-  }) ?? [];
+        return matchesSearch && matchesStatus && matchesOnlyIssues;
+      }) ?? []
+    );
+  }, [compareResult, searchQuery, statusFilter, onlyIssues]);
 
-function handleExportCsv() {
-  if (!compareResult || filteredResults.length === 0) {
-    return;
-  }
-
-  const safeFileName = compareResult.fileName
-    .replace(/\.[^/.]+$/, "")
-    .replace(/\s+/g, "-")
-    .toLowerCase();
-
-  downloadCsv(filteredResults, `${safeFileName}-compare-results.csv`);
-}
-
-  return (
-    <div className="space-y-6">
-      <ExcelUploadCard
-  selectedFile={selectedFile}
-  isLoading={isLoading}
-  onFileChange={(file) => {
-    setSelectedFile(file);
+  function resetCompareState() {
     setCompareResult(null);
     setErrorMessage(null);
     setSearchQuery("");
     setStatusFilter("all");
     setOnlyIssues(false);
-  }}
-  onCompare={handleCompare}
-/>
+  }
+
+  function handleExportCsv() {
+    if (!compareResult || filteredResults.length === 0) {
+      return;
+    }
+
+    const safeFileName = compareResult.fileName
+      .replace(/\.[^/.]+$/, "")
+      .replace(/\s+/g, "-")
+      .toLowerCase();
+
+    downloadCsv(filteredResults, `${safeFileName}-compare-results.csv`);
+  }
+
+  return (
+    <div className="space-y-6">
+      <ExcelUploadCard
+        selectedFile={selectedFile}
+        entityType={entityType}
+        isLoading={isLoading}
+        onFileChange={(file) => {
+          setSelectedFile(file);
+          resetCompareState();
+        }}
+          onEntityTypeChange={(nextEntityType) => {
+          setEntityType(nextEntityType);
+          setSelectedFile(null);
+          resetCompareState();
+        }}
+        onCompare={handleCompare}
+      />
 
       {errorMessage ? (
         <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
@@ -187,22 +267,22 @@ function handleExportCsv() {
 
           <ExcelCompareSummaryCards summary={compareResult.summary} />
 
-<ExcelCompareFilters
-  searchQuery={searchQuery}
-  statusFilter={statusFilter}
-  onlyIssues={onlyIssues}
-  resultCount={filteredResults.length}
-  totalCount={compareResult.results.length}
-  onSearchChange={setSearchQuery}
-  onStatusFilterChange={setStatusFilter}
-  onOnlyIssuesChange={setOnlyIssues}
-  onExportCsv={handleExportCsv}
-/>
+          <ExcelCompareFilters
+            searchQuery={searchQuery}
+            statusFilter={statusFilter}
+            onlyIssues={onlyIssues}
+            resultCount={filteredResults.length}
+            totalCount={compareResult.results.length}
+            onSearchChange={setSearchQuery}
+            onStatusFilterChange={setStatusFilter}
+            onOnlyIssuesChange={setOnlyIssues}
+            onExportCsv={handleExportCsv}
+          />
 
-<ExcelCompareResultsTable
-  results={filteredResults}
-  emptyMessage="Seçili filtrelere uygun karşılaştırma sonucu bulunamadı."
-/>
+          <ExcelCompareResultsTable
+            results={filteredResults}
+            emptyMessage="Seçili filtrelere uygun karşılaştırma sonucu bulunamadı."
+          />
         </>
       ) : (
         <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">

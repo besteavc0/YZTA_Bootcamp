@@ -140,15 +140,17 @@ Sprint Review katılımcıları: Beste (Product Owner), Hatice (Scrum Master).
 ## Daily Scrum
 
 Daily Scrum toplantıları kolay iletişime geçebilmek nedeniyle Whatsapp üzerinden yazılı olarak yürütülmüştür. Örnek ekran görüntüleri:
-<img src="https://github.com/user-attachments/assets/6499a30f-fec7-451e-a973-c56493b20a41" width="250">
-<img src="https://github.com/user-attachments/assets/c6538f43-4c49-4dcf-b21d-2298ae624e7c" width="250">
-<img src="https://github.com/user-attachments/assets/2c648bb1-63a1-4b67-9d3b-1cd72adc7b26" width="250">
-<img src="https://github.com/user-attachments/assets/52bc15b7-3e77-43f8-a924-414537fca17f" width="250">
-<img src="https://github.com/user-attachments/assets/764c309b-b9ba-4194-9154-f1b6933de096" width="250">
-<img src="https://github.com/user-attachments/assets/62918be3-a568-4a01-9940-3933b0f0c56f" width="250">
-<img src="https://github.com/user-attachments/assets/ec177cdd-c381-4b35-88a8-52887f9602aa" width="250">
-<img src="https://github.com/user-attachments/assets/899ef0c2-f9a1-4cc9-85d5-039ab3fd7047" width="250">
-<img src="https://github.com/user-attachments/assets/95fa0cf5-4eaa-4896-8b26-3660d062a352" width="250">
+
+<img width="250" alt="WhatsApp Image 2026-07-19 at 18 54 58 (3)" src="https://github.com/user-attachments/assets/c852183b-430a-4dcb-9ce9-9b4199e62eee" />
+<img width="250" alt="WhatsApp Image 2026-07-19 at 18 54 58 (2)" src="https://github.com/user-attachments/assets/61dd74ca-5b2e-4c3a-ac95-92f8eb12ee6f" />
+<img width="250" alt="WhatsApp Image 2026-07-19 at 18 54 58 (1)" src="https://github.com/user-attachments/assets/217aade0-0d17-49e2-89e9-7857540bde85" />
+<img width="250" alt="WhatsApp Image 2026-07-19 at 18 54 58" src="https://github.com/user-attachments/assets/89e5c58c-07a0-4b22-92aa-9ee6879b3079" />
+<img width="250" alt="WhatsApp Image 2026-07-19 at 18 54 58 (8)" src="https://github.com/user-attachments/assets/684681fc-5ebe-43fa-907c-8efa55452e89" />
+<img width="250" alt="WhatsApp Image 2026-07-19 at 18 54 58 (7)" src="https://github.com/user-attachments/assets/82d55f4a-a3f9-4a0b-9e99-d595780d5258" />
+<img width="250" alt="WhatsApp Image 2026-07-19 at 18 54 58 (6)" src="https://github.com/user-attachments/assets/9a9c5fe4-1753-4350-b8fa-e30fc2939cd3" />
+<img width="250" alt="WhatsApp Image 2026-07-19 at 18 54 58 (5)" src="https://github.com/user-attachments/assets/9a84b015-eb9d-41d0-a6f4-ced68c4334c6" />
+<img width="250" alt="WhatsApp Image 2026-07-19 at 18 54 58 (4)" src="https://github.com/user-attachments/assets/85e744d1-6d2e-4430-a34d-c45aa3766c62" />
+
 
 
 
@@ -176,6 +178,81 @@ Sprint Review katılımcıları: Beste (Product Owner), Medine, Yusuf, Hatice (S
 - Bazı görevler birbirine bağımlı olduğu için bir gecikme, sonraki görevi de geciktirdi; frontend tarafında Excel ekranları yetişmedi; ekip genelinde görev durumlarının şeffaf paylaşılmaması sprint sonunda net bir tablo çıkarmayı zorlaştırdı.
   
 - Sprint 3'de değiştirilecek: Birbirine bağımlı görevler arasında daha net zamanlama yapılacak; her görev sahibi sprint sonunda kendi durumunu yazılı olarak bildirecek; hazırlanan backend altyapısının ana koda birleştirilmesi önceliklendirilecek ki testler gecikmeden yapılabilsin.
+
+---
+
+# SPRINT 3
+
+- **Sprint içi puan değerlendirmesi** 33 olarak belirlenmiştir.
+- **Puan tamamlama mantığı:** Proje boyunca tamamlanması gereken backlog puanı 115'tir. Üçüncü Sprint için bitirilmesi istenilen puan sayısı 33 olarak belirlenmiştir.
+- **Sprint Hedefi:** Dashboard tamamlanarak ürün canlı bir URL'ye deploy edilsin ve tüm modüller uçtan uca test edilmesi hedeflenmiştir.
+- **Definition of Done:** Canlı URL'den login olunur; tüm özellikler (chat, anomali, Excel diff, digest) çalışır; güvenlik testleri geçer.
+- **Daily Scrum:** Whatsapp üzerinden günlük görüşmeler sağlanmıştır. Ekip tek grup olarak ilerlemiştir.
+
+- **Sprint 3 board update:** Sprint Board Screenshot:
+
+ <img width="1422" height="727" alt="sprint 3" src="https://github.com/user-attachments/assets/b7e18a0b-4cd6-49cf-80f5-19870ee89f58" />
+
+
+**Sprint 3 Görev Özeti**
+
+| Task | Atanan | SP | Epic |
+|------|--------|----|------|
+| TASK-029 Digest servis & job | P2 | 4 | Digest |
+| TASK-030 E-posta (opsiyonel) | P2 | 2 | Digest |
+| TASK-031 Digest UI | P3 | 3 | Digest |
+| TASK-032 Audit log UI | P3 | 3 | Admin |
+| TASK-033 Kullanıcı yönetimi UI | P3 | 2 | Admin |
+| TASK-034 Güvenlik akış testi | P1 | 2 | Admin |
+| TASK-035 SAP B1 & Logo stub | P2 | 3 | ERP |
+| TASK-036 Production deployment | P4 | 4 | Deploy |
+| TASK-037 E2E modül testleri & hata giderimi | P4 | 3 | Test |
+| TASK-038 Güvenlik & proje dokümantasyonu | P1 | 2 | Docs |
+| TASK-039 Dashboard | P3 | 3 | UI |
+| TASK-040 Sistem entegrasyon testleri | Tüm | 2 | Test |
+| **Toplam** | | **33 SP** | |
+
+
+
+
+## Daily Scrum
+
+Daily Scrum toplantıları kolay iletişime geçebilmek nedeniyle Whatsapp üzerinden yazılı olarak yürütülmüştür. Örnek ekran görüntüleri:
+
+<img width="250" alt="WhatsApp Image 2026-08-02 at 13 39 25" src="https://github.com/user-attachments/assets/0af21fe8-ee5f-4a60-ab7a-aa8b6950b8a3" />
+<img width="250" alt="WhatsApp Image 2026-08-02 at 13 39 34" src="https://github.com/user-attachments/assets/41f1434b-e0e1-4ad7-8882-fe3cd815a0f7" />
+<img width="250" alt="WhatsApp Image 2026-08-02 at 13 39 34 (1)" src="https://github.com/user-attachments/assets/786efab5-d20c-4bc0-83a2-1e1d8250dfb1" />
+<img width="250" alt="WhatsApp Image 2026-08-02 at 13 39 33" src="https://github.com/user-attachments/assets/d4d62653-6748-4077-96c0-f2237416275b" />
+<img width="250" alt="WhatsApp Image 2026-08-02 at 13 39 33 (1)" src="https://github.com/user-attachments/assets/4f104620-7c2a-4427-9d40-c683c66c6443" />
+<img width="250" alt="WhatsApp Image 2026-08-02 at 13 39 32" src="https://github.com/user-attachments/assets/e339a993-4068-4123-a220-9031a7bff06c" />
+<img width="250" alt="WhatsApp Image 2026-08-02 at 13 39 29" src="https://github.com/user-attachments/assets/7163c06a-6cd6-43aa-88d8-6baf83d219bb" />
+<img width="250" alt="WhatsApp Image 2026-08-02 at 13 39 28" src="https://github.com/user-attachments/assets/ff3065ff-39ad-4c1f-ac64-c1c7b102bd8a" />
+
+
+## Ürün Durumu: Ekran Görüntüleri
+
+Ürün Durumu ekran görüntüleri aşağıdaki gibidir.
+
+<img width="1600" height="727" alt="WhatsApp Image 2026-08-02 at 13 29 44" src="https://github.com/user-attachments/assets/4f8a68df-aaf1-4ce9-b72c-10d9a488b7c4" />
+<img width="1600" height="723" alt="WhatsApp Image 2026-08-02 at 13 29 44 (1)" src="https://github.com/user-attachments/assets/1de3726f-d3cf-4013-a002-eec7fe8f8132" />
+<img width="1600" height="724" alt="WhatsApp Image 2026-08-02 at 13 29 43" src="https://github.com/user-attachments/assets/6c999efc-ec48-4eda-892f-9022e71553e1" />
+<img width="1600" height="725" alt="WhatsApp Image 2026-08-02 at 13 29 43 (1)" src="https://github.com/user-attachments/assets/cbdd5595-8493-4a7a-8ec6-0406b890ece7" />
+
+## Sprint Review
+
+Sprint 3 hedefine ulaşıldı.
+
+Günlük özet özelliği, admin panel (audit log ve kullanıcı yönetimi ekranları) ve dashboard tamamlandı. Ürün production ortamına deploy edildi ve canlı URL üzerinden erişilebilir hale geldi. Tüm modüller (sohbet, anomali tespiti, Excel karşılaştırma, günlük özet) uçtan uca test edildi ve güvenlik testleri geçildi.
+
+Sprint Review katılımcıları: Beste (Product Owner), Medine, Yusuf, Hatice (Scrum Master).
+
+## Sprint Retrospective
+
+ Üç sprint boyunca planlanan tüm özellikler tamamlandı ve ürün başarıyla canlıya alındı; ekip, önceki sprintlerdeki gecikme ve iletişim sorunlarını bu sprintte aşarak hedefe ulaştı.
+ 
+ Deployment ve uçtan uca test süreci, birden fazla modülün aynı anda bir araya gelmesini gerektirdiği için dikkatli koordinasyon istedi.
+
+ Proje, planlanan üç sprint sonunda eksiksiz şekilde tamamlandı.
 
 ## Kurulum & Çalıştırma
 

@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { ClerkProvider } from "@clerk/nextjs";
+import { AppProviders } from "../components/providers/ReactQueryProvider";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "ERPilot",
-  description: "AI-powered ERP intelligence layer",
+  description: "ERPilot Dashboard",
 };
 
 export default function RootLayout({
@@ -13,10 +13,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider afterSignOutUrl="/login">
-      <html lang="tr">
-        <body>{children}</body>
-      </html>
-    </ClerkProvider>
+    <html lang="tr">
+      <body>
+        <AppProviders>{children}</AppProviders>
+      </body>
+    </html>
   );
 }

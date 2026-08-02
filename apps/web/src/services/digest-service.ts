@@ -1,3 +1,5 @@
+import { apiFetch } from "@/lib/api";
+
 export type DigestTrendDirection = "up" | "down" | "flat";
 
 export type DigestMetric = {
@@ -25,6 +27,31 @@ export type DailyDigest = {
   highlights: DigestHighlight[];
 };
 
+type BackendDigestMetrics = {
+  digest_date?: string;
+  today_order_count?: number;
+  today_total_amount?: number;
+  yesterday_order_count?: number;
+  yesterday_total_amount?: number;
+  order_count_change_pct?: number | null;
+  total_amount_change_pct?: number | null;
+  top_customers?: Array<{
+    name: string;
+    order_count: number;
+    total_amount: number;
+  }>;
+  critical_stock_count?: number;
+  new_anomalies_count?: number;
+};
+
+type BackendDigestResponse = {
+  tenant_id: string;
+  digest_date: string;
+  metrics: BackendDigestMetrics | string;
+  summary_text: string;
+  created_at: string | null;
+};
+
 type GetLatestDigestParams = {
   token?: string | null;
 };
@@ -47,6 +74,179 @@ function getTodayDateValue() {
 
 function isFutureDate(value: string) {
   return value > getTodayDateValue();
+}
+
+function formatCurrency(value: number) {
+  return new Intl.NumberFormat("tr-TR", {
+    style: "currency",
+    currency: "TRY",
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
+function getTrendDirection(value: number | null | undefined): DigestTrendDirection {
+  if (typeof value !== "number") {
+    return "flat";
+  }
+
+  if (value > 0) {
+    return "up";
+  }
+
+  if (value < 0) {
+    return "down";
+  }
+
+  return "flat";
+}
+
+function getTrendLabel(value: number | null | undefined) {
+  if (typeof value !== "number") {
+    return "Dün veri yok";
+  }
+
+  if (value > 0) {
+    return `%${Math.abs(value)} artış`;
+  }
+
+  if (value < 0) {
+    return `%${Math.abs(value)} düşüş`;
+  }
+
+  return "Değişim yok";
+}
+
+function normalizeBackendMetrics(
+  metrics: BackendDigestMetrics | string
+): BackendDigestMetrics {
+  if (typeof metrics === "string") {
+    try {
+      return JSON.parse(metrics) as BackendDigestMetrics;
+    } catch {
+      return {};
+    }
+  }
+
+  return metrics;
+}
+
+function mapBackendDigest(response: BackendDigestResponse): DailyDigest {
+  const metrics = normalizeBackendMetrics(response.metrics);
+
+  const topCustomer = metrics.top_customers?.[0] ?? null;
+
+  const digestMetrics: DigestMetric[] = [
+    {
+      id: "total-sales",
+      title: "Toplam Satış",
+      value: formatCurrency(metrics.today_total_amount ?? 0),
+      description: "Bugünkü toplam sipariş tutarı",
+      trendDirection: getTrendDirection(metrics.total_amount_change_pct),
+      trendLabel: getTrendLabel(metrics.total_amount_change_pct),
+    },
+    {
+      id: "order-count",
+      title: "Sipariş Sayısı",
+      value: String(metrics.today_order_count ?? 0),
+      description: "Bugün işlenen sipariş",
+      trendDirection: getTrendDirection(metrics.order_count_change_pct),
+      trendLabel: getTrendLabel(metrics.order_count_change_pct),
+    },
+    {
+      id: "new-anomalies",
+      title: "Yeni Anomali",
+      value: String(metrics.new_anomalies_count ?? 0),
+      description: "Bugün tespit edilen anomali",
+      trendDirection: (metrics.new_anomalies_count ?? 0) > 0 ? "up" : "flat",
+      trendLabel:
+        (metrics.new_anomalies_count ?? 0) > 0
+          ? "İnceleme gerekli"
+          : "Yeni kayıt yok",
+    },
+    {
+      id: "critical-stock",
+      title: "Kritik Stok",
+      value: String(metrics.critical_stock_count ?? 0),
+      description: "Reorder seviyesinin altındaki ürün",
+      trendDirection: (metrics.critical_stock_count ?? 0) > 0 ? "up" : "flat",
+      trendLabel:
+        (metrics.critical_stock_count ?? 0) > 0
+          ? "Aksiyon gerekli"
+          : "Risk yok",
+    },
+    {
+      id: "top-customer",
+      title: "En Aktif Müşteri",
+      value: topCustomer?.name ?? "-",
+      description: topCustomer
+        ? `${topCustomer.order_count} sipariş · ${formatCurrency(
+            topCustomer.total_amount
+          )}`
+        : "Bugün müşteri hareketi yok",
+      trendDirection: "flat",
+      trendLabel: "Bugün",
+    },
+    {
+      id: "digest-date",
+      title: "Özet Tarihi",
+      value: response.digest_date,
+      description: "Görüntülenen rapor tarihi",
+      trendDirection: "flat",
+      trendLabel: "Güncel",
+    },
+  ];
+
+  const highlights: DigestHighlight[] = [];
+
+  if ((metrics.new_anomalies_count ?? 0) > 0) {
+    highlights.push({
+      id: "highlight-anomalies",
+      title: "Anomali kontrolü gerekli",
+      description: `Bugün ${
+        metrics.new_anomalies_count ?? 0
+      } yeni anomali tespit edildi. Anomali panelinden detayları inceleyebilirsin.`,
+      severity: "warning",
+    });
+  }
+
+  if ((metrics.critical_stock_count ?? 0) > 0) {
+    highlights.push({
+      id: "highlight-stock",
+      title: "Kritik stok uyarısı",
+      description: `${
+        metrics.critical_stock_count ?? 0
+      } ürün reorder seviyesinin altında. Stok aksiyonu gerekebilir.`,
+      severity: "warning",
+    });
+  }
+
+  if (topCustomer) {
+    highlights.push({
+      id: "highlight-customer",
+      title: "En aktif müşteri",
+      description: `${topCustomer.name}, bugün ${topCustomer.order_count} sipariş ile öne çıkıyor.`,
+      severity: "info",
+    });
+  }
+
+  if (highlights.length === 0) {
+    highlights.push({
+      id: "highlight-stable",
+      title: "Operasyon dengeli",
+      description:
+        "Bugünkü metriklerde kritik seviyede anomali veya stok uyarısı görünmüyor.",
+      severity: "success",
+    });
+  }
+
+  return {
+    id: `${response.tenant_id}-${response.digest_date}`,
+    date: response.digest_date,
+    summary: response.summary_text,
+    generatedAt: response.created_at ?? new Date().toISOString(),
+    metrics: digestMetrics,
+    highlights,
+  };
 }
 
 function createMockDigest(date: string): DailyDigest {
@@ -73,38 +273,6 @@ function createMockDigest(date: string): DailyDigest {
         trendDirection: "up",
         trendLabel: "+8 sipariş",
       },
-      {
-        id: "anomalies",
-        title: "Açık Anomali",
-        value: "7",
-        description: "Çözüm bekleyen kayıt",
-        trendDirection: "down",
-        trendLabel: "3 azaldı",
-      },
-      {
-        id: "excel-diffs",
-        title: "Excel Farkları",
-        value: "5",
-        description: "Son karşılaştırmadaki fark",
-        trendDirection: "flat",
-        trendLabel: "Sabit",
-      },
-      {
-        id: "critical-stock",
-        title: "Kritik Stok",
-        value: "4",
-        description: "Reorder seviyesinin altında",
-        trendDirection: "up",
-        trendLabel: "+1 ürün",
-      },
-      {
-        id: "erp-sync",
-        title: "ERP Sync",
-        value: "Başarılı",
-        description: "Son senkronizasyon durumu",
-        trendDirection: "flat",
-        trendLabel: "Güncel",
-      },
     ],
     highlights: [
       {
@@ -113,20 +281,6 @@ function createMockDigest(date: string): DailyDigest {
         description:
           "Gece saatlerinde oluşan yüksek tutarlı siparişler anomali panelinde takip edilmeli.",
         severity: "warning",
-      },
-      {
-        id: "highlight-2",
-        title: "Excel karşılaştırma tamamlandı",
-        description:
-          "Son yüklenen dosyada 2 farklı değer ve 1 ERP'de bulunmayan kayıt tespit edildi.",
-        severity: "info",
-      },
-      {
-        id: "highlight-3",
-        title: "ERP bağlantıları aktif",
-        description:
-          "SAP bağlantısı başarılı, Logo bağlantısı için kurulum bekleniyor.",
-        severity: "success",
       },
     ],
   };
@@ -137,29 +291,25 @@ export async function getLatestDigest({
 }: GetLatestDigestParams = {}): Promise<DailyDigest | null> {
   if (useMockDigests) {
     await new Promise((resolve) => setTimeout(resolve, 600));
-
-    const today = getTodayDateValue();
-
-    return createMockDigest(today);
+    return createMockDigest(getTodayDateValue());
   }
 
-  const response = await fetch("/api/v1/digest/latest", {
-    headers: token
-      ? {
-          Authorization: `Bearer ${token}`,
-        }
-      : undefined,
-  });
+  try {
+    const response = await apiFetch<BackendDigestResponse>(
+      "/api/v1/digest/latest",
+      {
+        token,
+      }
+    );
 
-  if (response.status === 404) {
-    return null;
+    return mapBackendDigest(response);
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("404")) {
+      return null;
+    }
+
+    throw error;
   }
-
-  if (!response.ok) {
-    throw new Error("Günlük özet alınamadı.");
-  }
-
-  return response.json();
 }
 
 export async function getDigestByDate({
@@ -167,30 +317,29 @@ export async function getDigestByDate({
   token,
 }: GetDigestByDateParams): Promise<DailyDigest | null> {
   if (useMockDigests) {
-  await new Promise((resolve) => setTimeout(resolve, 600));
+    await new Promise((resolve) => setTimeout(resolve, 600));
 
-  if (isFutureDate(date)) {
-    return null;
+    if (isFutureDate(date)) {
+      return null;
+    }
+
+    return createMockDigest(date);
   }
 
-  return createMockDigest(date);
-}
+  try {
+    const response = await apiFetch<BackendDigestResponse>(
+      `/api/v1/digest?date=${date}`,
+      {
+        token,
+      }
+    );
 
-  const response = await fetch(`/api/v1/digest?date=${date}`, {
-    headers: token
-      ? {
-          Authorization: `Bearer ${token}`,
-        }
-      : undefined,
-  });
+    return mapBackendDigest(response);
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("404")) {
+      return null;
+    }
 
-  if (response.status === 404) {
-    return null;
+    throw error;
   }
-
-  if (!response.ok) {
-    throw new Error("Seçili tarih için günlük özet alınamadı.");
-  }
-
-  return response.json();
 }

@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useAuth, useUser } from "@clerk/nextjs";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { ChevronDown, Database } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { ChatHistoryPair } from "@/types";
 import { getChatHistoryPairs } from "@/services/chat-service";
 
 const PAGE_SIZE = 5;
@@ -15,53 +15,32 @@ export function ChatHistoryPanel() {
   const { getToken, isLoaded, isSignedIn } = useAuth();
   const { user } = useUser();
 
-  const [items, setItems] = useState<ChatHistoryPair[]>([]);
-  const [offset, setOffset] = useState(0);
-  const [hasMore, setHasMore] = useState(false);
   const [expandedSqlId, setExpandedSqlId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
   const role = user?.publicMetadata?.role ?? "user";
   const isAdmin = role === "admin";
 
-  async function loadHistory(nextOffset = 0) {
-
-     if (!isSignedIn) {
-    return;
-  }
-
-   if (!isLoaded || !isSignedIn) {
-    return;
-  }
-
-  
-    try {
-      setIsLoading(true);
-
+  const historyQuery = useInfiniteQuery({
+    queryKey: ["chat-history-pairs"],
+    enabled: isLoaded && Boolean(isSignedIn),
+    initialPageParam: 0,
+    queryFn: async ({ pageParam }) => {
       const token = await getToken();
 
-      console.log("Chat history token var mı?", Boolean(token));
-      console.log("Token başlangıcı:", token?.slice(0, 20));
-      
-      const response = await getChatHistoryPairs(0, PAGE_SIZE, token);
+      return getChatHistoryPairs(pageParam, PAGE_SIZE, token);
+    },
+    getNextPageParam: (lastPage, allPages) => {
+      if (!lastPage.hasMore) {
+        return undefined;
+      }
 
-      setItems((currentItems) =>
-        nextOffset === 0
-          ? response.items
-          : [...currentItems, ...response.items]
-      );
+      return allPages.length * PAGE_SIZE;
+    },
+  });
 
-      setOffset(nextOffset + PAGE_SIZE);
-      setHasMore(response.hasMore);
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    void loadHistory();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoaded, isSignedIn]);
+  const items = historyQuery.data?.pages.flatMap((page) => page.items) ?? [];
+  const isInitialLoading = historyQuery.isLoading;
+  const isLoadingMore = historyQuery.isFetchingNextPage;
 
   return (
     <Card className="h-[calc(100vh-8rem)] overflow-hidden">
@@ -70,11 +49,17 @@ export function ChatHistoryPanel() {
       </CardHeader>
 
       <CardContent className="h-full space-y-4 overflow-y-auto p-4">
-        {items.length === 0 && !isLoading && (
+        {historyQuery.isError ? (
+          <p className="text-sm text-destructive">
+            Sohbet geçmişi yüklenirken bir hata oluştu.
+          </p>
+        ) : null}
+
+        {items.length === 0 && !isInitialLoading && !historyQuery.isError ? (
           <p className="text-sm text-muted-foreground">
             Henüz geçmiş sohbet bulunmuyor.
           </p>
-        )}
+        ) : null}
 
         {items.map((item) => {
           const isSqlExpanded = expandedSqlId === item.id;
@@ -97,7 +82,7 @@ export function ChatHistoryPanel() {
                 })}
               </p>
 
-              {isAdmin && item.sqlQuery && (
+              {isAdmin && item.sqlQuery ? (
                 <div className="mt-3">
                   <Button
                     type="button"
@@ -112,37 +97,37 @@ export function ChatHistoryPanel() {
                     {isSqlExpanded ? "SQL’i gizle" : "SQL’i göster"}
                   </Button>
 
-                  {isSqlExpanded && (
+                  {isSqlExpanded ? (
                     <pre className="mt-2 overflow-x-auto rounded-md bg-muted p-3 text-xs">
                       <code>{item.sqlQuery}</code>
                     </pre>
-                  )}
+                  ) : null}
                 </div>
-              )}
+              ) : null}
             </div>
           );
         })}
 
-        {isLoading && (
+        {isInitialLoading ? (
           <p className="text-sm text-muted-foreground">
             Sohbet geçmişi yükleniyor...
           </p>
-        )}
+        ) : null}
 
-        {hasMore && (
+        {historyQuery.hasNextPage ? (
           <Button
             type="button"
             variant="outline"
             className="w-full"
-            disabled={isLoading}
+            disabled={isLoadingMore}
             onClick={() => {
-              void loadHistory(offset);
+              void historyQuery.fetchNextPage();
             }}
           >
             <ChevronDown className="mr-2 h-4 w-4" />
-            Daha fazla yükle
+            {isLoadingMore ? "Yükleniyor..." : "Daha fazla yükle"}
           </Button>
-        )}
+        ) : null}
       </CardContent>
     </Card>
   );

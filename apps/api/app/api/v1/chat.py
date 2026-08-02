@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -10,6 +10,7 @@ from app.db.session import get_db
 from app.dependencies import get_current_user
 from app.schemas.chat import ChatRequest, ChatResponse
 from app.security.auth import CurrentUser
+from app.security.audit import log_action
 from app.security.rbac import require_role
 from app.services.chat_service import answer_question
 
@@ -30,6 +31,7 @@ async def me(user: CurrentUser = Depends(get_current_user)) -> dict:
 @router.post("/chat", response_model=ChatResponse, tags=["chat"])
 async def chat(
     payload: ChatRequest,
+    request: Request,
     user: CurrentUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> ChatResponse:
@@ -59,6 +61,21 @@ async def chat(
         },
     )
     await db.commit()
+    
+    await log_action(
+    db=db,
+    user=user,
+    action="chat_query",
+    resource_type="chat_messages",
+    resource_id=None,
+    details={
+        "question": payload.question,
+        "sql_query": response.sql_query,
+        "sources": [source.model_dump() for source in response.sources],
+    },
+    request=request,
+    status="success",
+)
     return response
 
 
@@ -101,3 +118,48 @@ async def chat_history(
         for r in rows
     ]
     return {"items": items, "limit": limit, "offset": offset}
+
+@router.delete("/chat/history")
+async def clear_chat_history(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    result = await db.execute(
+        text(
+            """
+            DELETE FROM chat_messages
+            WHERE tenant_id = :tenant_id
+              AND user_id = :user_id
+            RETURNING id
+            """
+        ),
+        {
+            "tenant_id": str(current_user.tenant_id),
+            "user_id": str(current_user.user_id),
+        },
+    )
+
+    deleted_rows = result.fetchall()
+    deleted_count = len(deleted_rows)
+
+    await log_action(
+        db=db,
+        user=current_user,
+        action="chat_history_clear",
+        resource_type="chat_messages",
+        resource_id=str(current_user.user_id),
+        details={
+            "deleted_count": deleted_count,
+        },
+        request=request,
+        status="success",
+        tenant_id=str(current_user.tenant_id),
+    )
+
+    await db.commit()
+
+    return {
+        "success": True,
+        "deleted_count": deleted_count,
+    }

@@ -1,4 +1,16 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+const RAW_API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+
+function normalizeApiUrl(value: string): string {
+  const trimmed = value.trim().replace(/\/+$/, "");
+
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+    return trimmed;
+  }
+
+  return `https://${trimmed}`;
+}
+
+const API_URL = normalizeApiUrl(RAW_API_URL);
 
 type ApiFetchOptions = RequestInit & {
   token?: string | null;
@@ -10,7 +22,9 @@ export async function apiFetch<TResponse>(
 ): Promise<TResponse> {
   const { token, headers, ...restOptions } = options;
 
-  const response = await fetch(`${API_URL}${path}`, {
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+
+  const response = await fetch(`${API_URL}${normalizedPath}`, {
     ...restOptions,
     headers: {
       "Content-Type": "application/json",

@@ -23,6 +23,10 @@ const statusMap: Record<
     label: "Hata",
     className: "border-yellow-200 bg-yellow-50 text-yellow-700",
   },
+  failed: {
+    label: "Başarısız",
+    className: "border-red-200 bg-red-50 text-red-700",
+  },
 };
 
 export function AuditStatusBadge({ status }: AuditStatusBadgeProps) {

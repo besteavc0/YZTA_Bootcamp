@@ -15,11 +15,13 @@ class Settings(BaseSettings):
     OPENAI_MODEL: str = "gpt-4o-mini"
     EMBEDDING_MODEL: str = "text-embedding-3-small"
 
-    SECRET_KEY: str = "changeme"
-    CREDENTIAL_ENCRYPTION_KEY: str = "changeme"
+    SECRET_KEY: str 
+    CREDENTIAL_ENCRYPTION_KEY: str | None = None
 
     CLERK_SECRET_KEY: str = "sk_test_changeme"
     CLERK_JWKS_URL: str = "https://example.clerk.accounts.dev/.well-known/jwks.json"
+
+    FRONTEND_URL: str | None = None
 
 
 @lru_cache

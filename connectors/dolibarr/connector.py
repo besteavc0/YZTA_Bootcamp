@@ -1,5 +1,11 @@
 from __future__ import annotations
 
+import os
+import uuid
+
+import psycopg2
+from psycopg2.extras import execute_values
+
 import logging
 from datetime import datetime, timezone
 from typing import Any
@@ -10,13 +16,15 @@ from connectors.base import ERPConnector, SyncResult, TableSchema
 
 logger = logging.getLogger("erpilot.connectors.dolibarr")
 
+DEFAULT_DATABASE_URL = "postgresql://postgres:postgres@localhost:5432/erpilot"
+
 # Dolibarr sipariş statü kodu -> canonical status
 # (0=taslak,1=onaylandı,2=işleniyor,3=teslim edildi,-1=iptal)
 _ORDER_STATUS_MAP = {
-    "0": "pending",
-    "1": "pending",
-    "2": "pending",
-    "3": "completed",
+    "0": "draft",
+    "1": "confirmed",
+    "2": "delivered",
+    "3": "invoiced",
     "-1": "cancelled",
 }
 
@@ -33,6 +41,11 @@ class DolibarrConnector(ERPConnector):
         self.customers: list[dict] = []
         self.inventory: list[dict] = []
         self.orders: list[dict] = []
+        self.tenant_id = config.get("tenant_id")
+        self.source = config.get("source", self.SOURCE)
+        self.database_url = config.get(
+            "database_url", os.environ.get("DATABASE_URL", DEFAULT_DATABASE_URL)
+        )
 
   
     @property
@@ -118,56 +131,17 @@ class DolibarrConnector(ERPConnector):
             return str(value)
 
     def sync_incremental(self, since: datetime | None = None) -> SyncResult:
+        if not self.tenant_id:
+            return SyncResult(success=False, error="config içinde tenant_id eksik")
+
         try:
             rows_synced = 0
+            rows_synced += self._sync_customers()
+            rows_synced += self._sync_inventory()
+            rows_synced += self._sync_orders()
 
-            raw_customers = self._get("thirdparties", {"mode": 1})
-            for c in raw_customers:
-                self.customers.append(
-                    {
-                        "external_id": str(c.get("id")),
-                        "source": self.SOURCE,
-                        "name": c.get("name") or c.get("nom") or "",
-                        "city": c.get("town") or c.get("ville"),
-                        "segment": None,
-                    }
-                )
-            rows_synced += len(raw_customers)
-            raw_products = self._get("products")
-            for p in raw_products:
-                self.inventory.append(
-                    {
-                        "external_id": str(p.get("ref") or p.get("id")),
-                        "source": self.SOURCE,
-                        "product_name": p.get("label") or "",
-                        "warehouse": None,
-                        "quantity": float(p.get("stock_reel") or 0),
-                        "reorder_level": float(p.get("seuil_stock_alerte") or 0),
-                    }
-                )
-            rows_synced += len(raw_products)
+            logger.info("dolibarr_sync_done rows_synced=%d", rows_synced)
 
-            raw_orders = self._get("orders")
-            for o in raw_orders:
-                statut = str(o.get("statut", o.get("status", "")))
-                self.orders.append(
-                    {
-                        "external_id": str(o.get("ref") or o.get("id")),
-                        "source": self.SOURCE,
-                        "customer_external_id": str(o.get("socid")) if o.get("socid") else None,
-                        "order_date": self._parse_date(o.get("date") or o.get("date_commande")),
-                        "total_amount": float(o.get("total_ttc") or 0),
-                        "status": _ORDER_STATUS_MAP.get(statut, "pending"),
-                    }
-                )
-            rows_synced += len(raw_orders)
-
-            logger.info(
-                "dolibarr_sync_done customers=%d products=%d orders=%d",
-                len(self.customers),
-                len(self.inventory),
-                len(self.orders),
-            )
             return SyncResult(success=True, rows_synced=rows_synced)
 
         except httpx.HTTPStatusError as exc:
@@ -178,7 +152,150 @@ class DolibarrConnector(ERPConnector):
             msg = f"Dolibarr bağlantı hatası: {exc}"
             logger.error(msg)
             return SyncResult(success=False, error=msg)
-        except (ValueError, KeyError) as exc:
-            msg = f"Dolibarr veri ayrıştırma hatası: {exc}"
+        except (ValueError, KeyError, psycopg2.Error) as exc:
+            msg = f"Dolibarr veri işleme hatası: {exc}"
             logger.error(msg)
             return SyncResult(success=False, error=msg)
+
+    def _sync_customers(self) -> int:
+        raw_customers = self._get("thirdparties", {"mode": 1})
+
+        rows = [
+            (
+                str(uuid.uuid4()),
+                self.tenant_id,
+                str(c.get("id")),
+                self.source,
+                c.get("name") or c.get("nom") or "",
+                c.get("town") or c.get("ville"),
+                None,
+            )
+            for c in raw_customers
+        ]
+
+        if not rows:
+            return 0
+
+        conn = psycopg2.connect(self.database_url)
+
+        try:
+            with conn:
+                with conn.cursor() as cur:
+                    execute_values(
+                        cur,
+                        """
+                        INSERT INTO canonical_customers
+                            (id, tenant_id, external_id, source, name, city, segment)
+                        VALUES %s
+                        ON CONFLICT (tenant_id, external_id, source) DO UPDATE
+                            SET name = EXCLUDED.name,
+                                city = EXCLUDED.city,
+                                segment = EXCLUDED.segment,
+                                updated_at = NOW()
+                        """,
+                        rows,
+                    )
+
+            return len(rows)
+        finally:
+            conn.close()
+
+    def _sync_inventory(self) -> int:
+        raw_products = self._get("products")
+
+        rows = [
+            (
+                str(uuid.uuid4()),
+                self.tenant_id,
+                str(p.get("ref") or p.get("id")),
+                self.source,
+                p.get("label") or "",
+                None,
+                float(p.get("stock_reel") or 0),
+                float(p.get("seuil_stock_alerte") or 0),
+            )
+            for p in raw_products
+        ]
+
+        if not rows:
+            return 0
+
+        conn = psycopg2.connect(self.database_url)
+
+        try:
+            with conn:
+                with conn.cursor() as cur:
+                    execute_values(
+                        cur,
+                        """
+                        INSERT INTO canonical_inventory
+                            (id, tenant_id, external_id, source, product_name,
+                             warehouse, quantity, reorder_level)
+                        VALUES %s
+                        ON CONFLICT (tenant_id, external_id, source, warehouse) DO UPDATE
+                            SET product_name = EXCLUDED.product_name,
+                                quantity = EXCLUDED.quantity,
+                                reorder_level = EXCLUDED.reorder_level,
+                                updated_at = NOW()
+                        """,
+                        rows,
+                    )
+
+            return len(rows)
+        finally:
+            conn.close()
+
+    def _sync_orders(self) -> int:
+        raw_orders = self._get("orders", {"sortfield": "t.rowid", "sortorder": "ASC"})
+
+        rows = []
+
+        for o in raw_orders:
+            statut = str(o.get("statut", o.get("status", "")))
+
+            try:
+                total_amount = float(o.get("total_ttc") or 0)
+            except (ValueError, TypeError):
+                total_amount = 0.0
+
+            rows.append(
+                (
+                    str(uuid.uuid4()),
+                    self.tenant_id,
+                    str(o.get("ref") or o.get("id")),
+                    self.source,
+                    str(o.get("socid")) if o.get("socid") else None,
+                    self._parse_date(o.get("date") or o.get("date_commande")),
+                    total_amount,
+                    _ORDER_STATUS_MAP.get(statut, "pending"),
+                )
+            )
+
+        if not rows:
+            return 0
+
+        conn = psycopg2.connect(self.database_url)
+
+        try:
+            with conn:
+                with conn.cursor() as cur:
+                    execute_values(
+                        cur,
+                        """
+                        INSERT INTO canonical_orders
+                            (id, tenant_id, external_id, source, customer_external_id,
+                             order_date, total_amount, status)
+                        VALUES %s
+                        ON CONFLICT (tenant_id, external_id, source) DO UPDATE
+                            SET customer_external_id = EXCLUDED.customer_external_id,
+                                order_date = EXCLUDED.order_date,
+                                total_amount = EXCLUDED.total_amount,
+                                status = EXCLUDED.status,
+                                updated_at = NOW()
+                        """,
+                        rows,
+                    )
+
+            return len(rows)
+        finally:
+            conn.close()
