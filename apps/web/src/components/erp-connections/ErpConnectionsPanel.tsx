@@ -12,6 +12,7 @@ import {
   syncErpConnection,
   testErpConnection,
   updateErpConnection,
+  deleteErpConnection,
   type CreateErpConnectionPayload,
   type ErpConnection,
   type ErpConnectionStatusFilter,
@@ -64,6 +65,9 @@ const [syncHistoryErrorMessage, setSyncHistoryErrorMessage] = useState<
 >(null);
 const [isCreateFormOpen, setIsCreateFormOpen] = useState(false);
 const [isCreating, setIsCreating] = useState(false);
+const [deletingConnectionId, setDeletingConnectionId] = useState<string | null>(
+  null
+);
 
 useEffect(() => {
   let isMounted = true;
@@ -267,6 +271,48 @@ async function handleSyncConnection(connectionId: string) {
   }
 }
 
+async function handleDeleteConnection(connectionId: string) {
+  const shouldDelete = window.confirm(
+    "Bu ERP bağlantısını silmek istediğinizden emin misiniz? Bağlantıya ait sync geçmişi de silinebilir."
+  );
+
+  if (!shouldDelete) {
+    return;
+  }
+
+  setDeletingConnectionId(connectionId);
+  setSuccessMessage(null);
+  setErrorMessage(null);
+
+  try {
+    const token = await getToken();
+
+    await deleteErpConnection({
+      connectionId,
+      token,
+    });
+
+    setConnections((currentConnections) =>
+      currentConnections.filter((connection) => connection.id !== connectionId)
+    );
+
+    if (selectedSyncConnectionId === connectionId) {
+      setSelectedSyncConnectionId("");
+      setSyncRuns([]);
+    }
+
+    setSuccessMessage("ERP bağlantısı başarıyla silindi.");
+  } catch (error) {
+    setErrorMessage(
+      error instanceof Error
+        ? error.message
+        : "ERP bağlantısı silinirken beklenmeyen bir hata oluştu."
+    );
+  } finally {
+    setDeletingConnectionId(null);
+  }
+}
+
   const filteredConnections = connections.filter((connection) => {
     const normalizedSearchQuery = searchQuery.trim().toLowerCase();
 
@@ -297,8 +343,6 @@ async function handleSyncConnection(connectionId: string) {
   const editingConnection =
     connections.find((connection) => connection.id === editingConnectionId) ??
     null;
-
-    const defaultTenantId = connections[0]?.companyCode ?? "";
 
     const activeSyncConnectionId =
   selectedSyncConnectionId || connections[0]?.id || "";
@@ -348,7 +392,6 @@ async function handleSyncConnection(connectionId: string) {
 
 {isCreateFormOpen ? (
   <ErpConnectionCreateForm
-    defaultTenantId={defaultTenantId}
     isSaving={isCreating}
     onCancel={() => setIsCreateFormOpen(false)}
     onSave={handleCreateConnection}
@@ -389,6 +432,8 @@ async function handleSyncConnection(connectionId: string) {
   onTestConnection={handleTestConnection}
   onSyncConnection={handleSyncConnection}
   onEditConnection={setEditingConnectionId}
+  isDeleting={deletingConnectionId === connection.id}
+  onDeleteConnection={handleDeleteConnection}
 />
           ))}
         </div>

@@ -1,4 +1,4 @@
-import { Database, PlugZap, Settings } from "lucide-react";
+import { Database, PlugZap, RefreshCw, Settings, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,8 +7,6 @@ import type { ErpConnection } from "@/services/erp-connection-service";
 import { ErpConnectionStatusBadge } from "./ErpConnectionStatusBadge";
 import { ErpProviderBadge } from "./ErpProviderBadge";
 
-import { RefreshCw } from "lucide-react";
-
 type ErpConnectionCardProps = {
   connection: ErpConnection;
   isTesting: boolean;
@@ -16,6 +14,8 @@ type ErpConnectionCardProps = {
   onEditConnection: (connectionId: string) => void;
   isSyncing?: boolean;
   onSyncConnection?: (connectionId: string) => void;
+  isDeleting?: boolean;
+  onDeleteConnection?: (connectionId: string) => void;
 };
 
 function formatDateTime(value: string | null) {
@@ -36,6 +36,8 @@ export function ErpConnectionCard({
   onEditConnection,
   isSyncing = false,
   onSyncConnection,
+  isDeleting = false,
+  onDeleteConnection,
 }: ErpConnectionCardProps) {
   return (
     <Card>
@@ -107,6 +109,15 @@ export function ErpConnectionCard({
   >
     <Settings className="mr-2 h-4 w-4" />
     Ayarları Düzenle
+  </Button>
+    <Button
+    type="button"
+    variant="destructive"
+    disabled={isDeleting}
+    onClick={() => onDeleteConnection?.(connection.id)}
+  >
+    <Trash2 className="mr-2 h-4 w-4" />
+    {isDeleting ? "Siliniyor..." : "Bağlantıyı Sil"}
   </Button>
 </div>
       </CardContent>

@@ -41,7 +41,6 @@ export type UpdateErpConnectionPayload = {
 };
 
 export type CreateErpConnectionPayload = {
-  tenantId: string;
   name: string;
   connectorType: ErpProvider;
   config: Record<string, unknown>;
@@ -123,6 +122,16 @@ type BackendErpSyncRun = {
 type GetErpSyncRunsParams = {
   connectionId: string;
   token?: string | null;
+};
+
+type DeleteErpConnectionParams = {
+  connectionId: string;
+  token?: string | null;
+};
+
+type DeleteErpConnectionResponse = {
+  success: boolean;
+  connection_id: string;
 };
 
 const useMockErpConnections =
@@ -389,7 +398,7 @@ export async function createErpConnection({
         typeof payload.config.file_path === "string"
           ? payload.config.file_path
           : "-",
-      companyCode: payload.tenantId,
+      companyCode: "-",
       lastSyncAt: null,
     };
 
@@ -403,7 +412,6 @@ export async function createErpConnection({
       token,
       method: "POST",
       body: JSON.stringify({
-        tenant_id: payload.tenantId,
         name: payload.name,
         connector_type: payload.connectorType,
         config: payload.config,
@@ -435,5 +443,33 @@ export async function updateErpConnection({
 
   throw new Error(
     `ERP bağlantısı güncelleme endpoint'i backend tarafında henüz hazır değil. Connection ID: ${connectionId}`
+  );
+}
+
+export async function deleteErpConnection({
+  connectionId,
+  token,
+}: DeleteErpConnectionParams): Promise<void> {
+  if (useMockErpConnections) {
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    const connectionIndex = mockConnections.findIndex(
+      (item) => item.id === connectionId
+    );
+
+    if (connectionIndex === -1) {
+      throw new Error("ERP bağlantısı bulunamadı.");
+    }
+
+    mockConnections.splice(connectionIndex, 1);
+    return;
+  }
+
+  await apiFetch<DeleteErpConnectionResponse>(
+    `/api/v1/erp/connections/${connectionId}`,
+    {
+      token,
+      method: "DELETE",
+    }
   );
 }

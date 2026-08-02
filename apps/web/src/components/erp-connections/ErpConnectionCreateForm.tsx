@@ -10,7 +10,6 @@ import type {
 type EntityType = "orders" | "customers" | "inventory";
 
 type ErpConnectionCreateFormProps = {
-  defaultTenantId: string;
   isSaving: boolean;
   onCancel: () => void;
   onSave: (payload: CreateErpConnectionPayload) => void;
@@ -110,7 +109,6 @@ function getDefaultConnectionName(connectorType: ErpProvider) {
 }
 
 export function ErpConnectionCreateForm({
-  defaultTenantId,
   isSaving,
   onCancel,
   onSave,
@@ -166,7 +164,6 @@ export function ErpConnectionCreateForm({
     event.preventDefault();
 
     onSave({
-      tenantId: defaultTenantId.trim(),
       name: name.trim(),
       connectorType,
       config: buildConfig(),

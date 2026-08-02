@@ -264,3 +264,65 @@ async def list_sync_runs(
         rows = result.mappings().all()
 
         return [SyncRunResponse(**dict(row)) for row in rows]
+    
+@router.delete("/connections/{connection_id}")
+async def delete_connection(
+    connection_id: str,
+    request: Request,
+    current_user: CurrentUser = Depends(require_admin_user),
+):
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(
+            text(
+                """
+                SELECT id, name, connector_type
+                FROM erp_connections
+                WHERE id = :id AND tenant_id = :tenant_id
+                """
+            ),
+            {
+                "id": connection_id,
+                "tenant_id": str(current_user.tenant_id),
+            },
+        )
+
+        row = result.mappings().first()
+
+        if row is None:
+            raise HTTPException(status_code=404, detail="ERP connection not found")
+
+        await session.execute(
+            text(
+                """
+                DELETE FROM erp_connections
+                WHERE id = :id AND tenant_id = :tenant_id
+                """
+            ),
+            {
+                "id": connection_id,
+                "tenant_id": str(current_user.tenant_id),
+            },
+        )
+
+        await log_action(
+            db=session,
+            user=current_user,
+            action="erp_config_change",
+            resource_type="erp_connections",
+            resource_id=connection_id,
+            details={
+                "operation": "delete_connection",
+                "connector_type": row["connector_type"],
+                "connection_name": row["name"],
+            },
+            request=request,
+            status="success",
+            tenant_id=str(current_user.tenant_id),
+        )
+
+        await session.commit()
+
+        return {
+            "success": True,
+            "connection_id": connection_id,
+        }
