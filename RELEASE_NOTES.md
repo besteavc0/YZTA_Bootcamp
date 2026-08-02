@@ -1,10 +1,10 @@
 **ERPilot — MVP Sürümü · Sprint 3 Sonu**
 
-ERPilot MVP'si; doğal dilde (Türkçe) ERP sorgulama, güvenli Text-to-SQL pipeline, rol bazlı erişim, ERP connector mimarisi (Dolibarr/CSV), anomali tespiti, Excel karşılaştırma ve günlük özet modüllerini içerir.
+ERPilot MVP'si; doğal dilde (Türkçe) ERP sorgulama, güvenli Text-to-SQL pipeline, rol bazlı erişim, ERP connector mimarisi, anomali tespiti, Excel karşılaştırma ve günlük özet modüllerini içerir.
 
 ---
 
-# Tamamlanan Ana Yetenekler
+# Tamamlananlar
 
 - **Doğal dil sorgulama (Text-to-SQL):** RAG + LLM ile Türkçe soru → güvenli SQL → Türkçe yanıt
 - **Güvenlik:** Clerk JWT auth, RBAC (admin/user/viewer), tenant izolasyonu, SQL injection koruması, audit log
@@ -34,7 +34,7 @@ Sprint 3 sonunda tüm ekibin katıldığı entegrasyon test oturumu gerçekleşt
 
 > **P1 sorumluluğu:** güvenlik akışı + AI pipeline entegrasyonu.  
 > **Tarih:** 31.07.2026  
-> **Katılımcılar:** tüm ekip (Beste, Medine, Yusuf, Hatice)
+> **Katılımcılar:** Beste, Medine, Yusuf, Hatice
 
 ---
 
@@ -54,23 +54,15 @@ Sprint 3 sonunda tüm ekibin katıldığı entegrasyon test oturumu gerçekleşt
 
 ---
 
-# Tespit Edilen Regresyonlar / Sorunlar
-
-| Sorun | Etki | Durum |
-|-------|------|--------|
-| Audit endpoint router'a bağlı değildi (404) | Güvenlik testi Senaryo 3 | ☑ giderildi (fix/audit-router) |
-
----
-
 # Sonuç
 
 **Genel entegrasyon durumu:** ☑ **Başarılı**
 
-9/9 entegrasyon senaryosu başarıyla doğrulandı. Tespit edilen 1 regresyon (audit router) giderildi.
+9/9 entegrasyon senaryosu başarıyla doğrulandı. Tespit edilen başarısız durumlar düzeltildi.
 
 ---
 
-# Bilinen Sınırlar
+# Sınırlar
 
 - Oracle/SAP connector'ları iskelet halindedir; ürün fazında doldurulacaktır.
 - ERP config şifrelemesi (TASK-020) entegrasyon aşamasındadır; üretim öncesi Fernet ile tamamlanacaktır.
@@ -78,12 +70,3 @@ Sprint 3 sonunda tüm ekibin katıldığı entegrasyon test oturumu gerçekleşt
 
 ---
 
-# Kurulum & Dokümantasyon
-
-- `README.md` — genel bakış ve hızlı başlangıç
-- `docs/ARCHITECTURE.md` — sistem mimarisi
-- `docs/SECURITY.md` — güvenlik dokümanı
-- `docs/KVKK_DATA_POLICY.md` — veri politikası
-- `docs/RBAC_MATRIX.md` — erişim matrisi
-- `docs/SECURITY_TEST_RESULTS.md` — güvenlik test sonuçları
-- `docs/DOLIBARR_KURULUM.md` — ücretsiz ERP denemesi
