@@ -64,6 +64,62 @@ function downloadCsv(results: ExcelCompareResult[], fileName: string) {
   URL.revokeObjectURL(url);
 }
 
+function getFriendlyExcelError(message: string) {
+  const normalizedMessage = message.toLowerCase();
+
+  if (
+    normalizedMessage.includes("utf-8") ||
+    normalizedMessage.includes("codec") ||
+    normalizedMessage.includes("decode") ||
+    normalizedMessage.includes("invalid continuation byte")
+  ) {
+    return "Dosya okunamadı. Lütfen CSV dosyasını CSV UTF-8 formatında kaydedip tekrar yükleyin. Excel kullanıyorsanız Farklı Kaydet > CSV UTF-8 seçeneğini kullanın.";
+  }
+
+  if (
+    normalizedMessage.includes("missing") ||
+    normalizedMessage.includes("column") ||
+    normalizedMessage.includes("required") ||
+    normalizedMessage.includes("field")
+  ) {
+    return "Dosyada beklenen kolonlar eksik görünüyor. Lütfen seçtiğiniz veri tipi için örnek CSV şablonunu indirip aynı kolon yapısıyla tekrar deneyin.";
+  }
+
+  if (
+    normalizedMessage.includes("unsupported") ||
+    normalizedMessage.includes("format") ||
+    normalizedMessage.includes("file type")
+  ) {
+    return "Dosya formatı desteklenmiyor. Lütfen .csv veya .xlsx formatında bir dosya yükleyin.";
+  }
+
+  if (
+    normalizedMessage.includes("401") ||
+    normalizedMessage.includes("unauthorized")
+  ) {
+    return "Oturum doğrulanamadı. Lütfen sayfayı yenileyip tekrar deneyin.";
+  }
+
+  if (
+    normalizedMessage.includes("403") ||
+    normalizedMessage.includes("forbidden")
+  ) {
+    return "Bu işlem için yetkiniz bulunmuyor. Lütfen kullanıcı rolünüzü kontrol edin.";
+  }
+
+  if (
+    normalizedMessage.includes("failed to fetch") ||
+    normalizedMessage.includes("network")
+  ) {
+    return "Sunucuya ulaşılamadı. Lütfen bağlantınızı kontrol edin veya sayfayı yenileyip tekrar deneyin.";
+  }
+
+  return (
+    message ||
+    "Excel karşılaştırma sırasında beklenmeyen bir hata oluştu. Lütfen dosya formatını ve seçili veri tipini kontrol edin."
+  );
+}
+
 export function ExcelComparePanel() {
   const { getToken } = useAuth();
 
@@ -96,13 +152,15 @@ export function ExcelComparePanel() {
       });
 
       setCompareResult(response);
-    } catch (error) {
+        } catch (error) {
+      console.error("Excel compare failed:", error);
+
       const message =
         error instanceof Error
           ? error.message
           : "Excel karşılaştırma sırasında beklenmeyen bir hata oluştu.";
 
-      setErrorMessage(message);
+      setErrorMessage(getFriendlyExcelError(message));
     } finally {
       setIsLoading(false);
     }
