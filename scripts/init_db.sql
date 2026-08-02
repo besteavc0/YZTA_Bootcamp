@@ -234,6 +234,7 @@ CREATE TABLE excel_uploads (
     entity_type     VARCHAR(50) NOT NULL, -- orders | customers | inventory
     column_mapping  JSONB,
     row_count       INTEGER,
+    raw_data        JSONB,
     uploaded_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
