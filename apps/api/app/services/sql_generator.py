@@ -9,6 +9,9 @@ from app.ai.embeddings import generate_embedding
 from app.ai.llm_client import llm_client
 from app.ai.prompt_loader import load_prompt
 
+import re
+import unicodedata
+
 logger = logging.getLogger("erpilot.services.sql_generator")
 
 _SCHEMA_DDL = """
@@ -60,6 +63,121 @@ ORDER BY toplam_satis DESC
 LIMIT 1000;
 """.strip()
 
+def _normalize_question(question: str) -> str:
+    normalized = unicodedata.normalize("NFKD", question.casefold())
+    normalized = "".join(
+        char for char in normalized if not unicodedata.combining(char)
+    )
+    normalized = re.sub(r"\s+", " ", normalized)
+    return normalized.strip()
+
+
+def _contains_any(text: str, keywords: list[str]) -> bool:
+    return any(keyword in text for keyword in keywords)
+
+
+def _generate_rule_based_sql(question: str) -> str | None:
+    q = _normalize_question(question)
+
+    asks_sales = _contains_any(q, ["satis", "ciro", "tutar", "gelir"])
+    asks_month = _contains_any(q, ["ay", "aylar", "aylik", "hangi aylarda"])
+    asks_customer = _contains_any(q, ["musteri", "cari"])
+    asks_stock = _contains_any(q, ["stok", "urun", "envanter"])
+    asks_critical = _contains_any(q, ["kritik", "az", "dusuk", "reorder"])
+    asks_count = _contains_any(q, ["kac", "adet", "sayisi", "count"])
+    asks_highest = _contains_any(q, ["en cok", "daha fazla", "en fazla", "yuksek"])
+    asks_this_year = _contains_any(q, ["bu yil", "2026", "yil"])
+    asks_this_month = _contains_any(q, ["bu ay", "ay toplam"])
+
+    if asks_stock and asks_critical:
+        return """
+SELECT product_name, warehouse, quantity, reorder_level
+FROM canonical_inventory
+WHERE tenant_id = :tenant_id
+  AND quantity < reorder_level
+ORDER BY quantity ASC
+LIMIT 1000
+""".strip()
+
+    if asks_customer and asks_sales:
+        return """
+SELECT
+  COALESCE(c.name, o.customer_external_id, 'Bilinmeyen müşteri') AS musteri,
+  SUM(o.total_amount) AS toplam_satis,
+  COUNT(*) AS siparis_sayisi
+FROM canonical_orders o
+LEFT JOIN canonical_customers c
+  ON c.tenant_id = o.tenant_id
+ AND c.external_id = o.customer_external_id
+WHERE o.tenant_id = :tenant_id
+GROUP BY COALESCE(c.name, o.customer_external_id, 'Bilinmeyen müşteri')
+ORDER BY toplam_satis DESC
+LIMIT 1000
+""".strip()
+
+    if asks_sales and asks_month:
+        year_filter = (
+            "AND order_date >= date_trunc('year', CURRENT_DATE)"
+            if asks_this_year
+            else ""
+        )
+
+        return f"""
+SELECT
+  to_char(date_trunc('month', order_date), 'YYYY-MM') AS ay,
+  SUM(total_amount) AS toplam_satis,
+  COUNT(*) AS siparis_sayisi
+FROM canonical_orders
+WHERE tenant_id = :tenant_id
+  {year_filter}
+GROUP BY date_trunc('month', order_date)
+ORDER BY date_trunc('month', order_date)
+LIMIT 1000
+""".strip()
+
+    if asks_sales and asks_this_month:
+        return """
+SELECT
+  SUM(total_amount) AS toplam_satis,
+  COUNT(*) AS siparis_sayisi
+FROM canonical_orders
+WHERE tenant_id = :tenant_id
+  AND order_date >= date_trunc('month', CURRENT_DATE)
+LIMIT 1000
+""".strip()
+
+    if asks_sales and asks_highest:
+        return """
+SELECT external_id, customer_external_id, order_date, total_amount, status
+FROM canonical_orders
+WHERE tenant_id = :tenant_id
+ORDER BY total_amount DESC
+LIMIT 1
+""".strip()
+
+    if asks_count and _contains_any(q, ["siparis", "order"]):
+        return """
+SELECT COUNT(*) AS siparis_sayisi
+FROM canonical_orders
+WHERE tenant_id = :tenant_id
+LIMIT 1000
+""".strip()
+
+    if _contains_any(q, ["baska ay", "diger ay", "agustos disinda", "bu ay disinda"]):
+        return """
+SELECT
+  to_char(date_trunc('month', order_date), 'YYYY-MM') AS ay,
+  SUM(total_amount) AS toplam_satis,
+  COUNT(*) AS siparis_sayisi
+FROM canonical_orders
+WHERE tenant_id = :tenant_id
+GROUP BY date_trunc('month', order_date)
+ORDER BY date_trunc('month', order_date)
+LIMIT 1000
+""".strip()
+
+    return None
+
 
 async def _fetch_relevant_glossary(question: str, db: AsyncSession, top_k: int = 8) -> str:
     try:
@@ -94,6 +212,24 @@ async def _fetch_relevant_glossary(question: str, db: AsyncSession, top_k: int =
             f"(eş anlamlılar: {alias_text})"
         )
     return "\n".join(lines) if lines else "(sözlük boş)"
+
+async def generate_sql(question: str, tenant_id: str, db: AsyncSession) -> str:
+    rule_based_sql = _generate_rule_based_sql(question)
+    if rule_based_sql:
+        logger.info("sql_generated_rule_based question=%r", question[:80])
+        return rule_based_sql
+
+    glossary = await _fetch_relevant_glossary(question, db)
+    schema_block = f"{_SCHEMA_DDL}\n\nTürkçe sözlük:\n{glossary}"
+
+    system_prompt = load_prompt("text_to_sql").format(
+        schema=schema_block,
+        examples=_EXAMPLES,
+    )
+
+    raw_sql = await llm_client.complete(system_prompt, question)
+    logger.info("sql_generated question=%r", question[:80])
+    return raw_sql.strip()
 
 
 async def generate_sql(question: str, tenant_id: str, db: AsyncSession) -> str:
